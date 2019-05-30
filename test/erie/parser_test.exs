@@ -32,6 +32,24 @@ defmodule ParserTest do
                 {:")", 1}
               ], _} = Parser.tokenize(code)
     end
+
+    test "string literal" do
+      code = ~S"""
+      (def name [] String "abc")
+      """
+
+      assert {:ok,
+              [
+                {:"(", 1},
+                {:atom, 1, :def},
+                {:atom, 1, :name},
+                {:"(", 1},
+                {:")", 1},
+                {:symbol, 1, :String},
+                {:string, 1, "abc"},
+                {:")", 1}
+              ], 2} = Parser.tokenize(code)
+    end
   end
 
   describe "parser" do
@@ -97,6 +115,23 @@ defmodule ParserTest do
                   [{:symbol, 1, :x}, {:symbol, 1, :Integer}],
                   {:symbol, 1, :Integer},
                   {:atom, 1, :x}
+                ]
+              ]} = Parser.parse(code)
+    end
+
+    test "string literal" do
+      code = ~S"""
+      (def name [] String "abc")
+      """
+
+      assert {:ok,
+              [
+                [
+                  {:atom, 1, :def},
+                  {:atom, 1, :name},
+                  [],
+                  {:symbol, 1, :String},
+                  {:string, 1, "abc"}
                 ]
               ]} = Parser.parse(code)
     end

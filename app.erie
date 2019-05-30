@@ -1,3 +1,4 @@
-(defmodule Derie)
+(defmodule Core)
 
-(def name ['x Integer] Integer x)
+(def split_by_comma ['str String] String
+  (Elixir.String.split str ","))

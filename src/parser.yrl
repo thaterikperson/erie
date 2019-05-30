@@ -1,5 +1,5 @@
 Nonterminals list elems elem group.
-Terminals '(' ')' integer float atom symbol.
+Terminals '(' ')' integer float atom symbol string.
 Rootsymbol group.
 
 group -> list : ['$1'].
@@ -16,5 +16,6 @@ elem -> float : '$1'.
 elem -> integer  : '$1'.
 elem -> list : '$1'.
 elem -> symbol : '$1'.
+elem -> string : '$1'.
 
 Erlang code.

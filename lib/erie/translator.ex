@@ -59,12 +59,36 @@ defmodule Erie.Translator do
     translate_body(rest, [{:op, line, :+, p1, p2} | accum])
   end
 
+  def translate_body([[{:atom, line, val} | func_args] | rest], accum) do
+    args = translate_body(func_args, [])
+    ast = {:call, line, {:atom, line, val}, args}
+    translate_body(rest, [ast | accum])
+  end
+
+  def translate_body([[{:symbol, line, val} | func_args] | rest], accum) do
+    args = translate_body(func_args, []) |> Enum.reverse()
+    [func | mod_parts] = val |> Atom.to_string() |> String.split(".") |> Enum.reverse()
+    mod = mod_parts |> Enum.reverse() |> Enum.join(".") |> String.to_atom()
+    func = String.to_atom(func)
+
+    ast = {:call, line, {:remote, line, {:atom, 3, mod}, {:atom, 3, func}}, args}
+    translate_body(rest, [ast | accum])
+  end
+
   def translate_body([{:integer, line, val} | rest], accum) do
     translate_body(rest, [{:integer, line, val} | accum])
   end
 
   def translate_body([{:atom, line, val} | rest], accum) do
     translate_body(rest, [{:var, line, val} | accum])
+  end
+
+  def translate_body([{:string, line, val} | rest], accum) do
+    tuple =
+      {:bin, line,
+       [{:bin_element, line, {:string, line, String.to_charlist(val)}, :default, :default}]}
+
+    translate_body(rest, [tuple | accum])
   end
 
   def translate_body([], accum) do

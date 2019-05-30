@@ -20,10 +20,6 @@ defmodule Erie do
       {:ok, m, b} = :compile.forms(ast)
 
       :code.load_binary(m, 'nofile', b)
-
-      IO.puts("================")
-      IO.inspect(apply(:"Erie.Derie", :name, []))
-      IO.puts("================")
     else
       x -> IO.warn(inspect(x))
     end
