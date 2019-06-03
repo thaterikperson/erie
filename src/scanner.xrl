@@ -1,7 +1,7 @@
 Definitions.
 Digit      = [0-9]
 Upper      = [A-Z]
-Alpha      = [A-Za-z\._!]
+Alpha      = [A-Za-z\._!\+]
 Whitespace = [\n\t\s,;]
 
 Rules.
@@ -10,8 +10,11 @@ Rules.
 {Digit}+   : {token, {integer,  TokenLine, list_to_integer(TokenChars)}}.
 \(              : {token, {'(',  TokenLine}}.
 \)              : {token, {')',  TokenLine}}.
-\[              : {token, {'(',  TokenLine}}.
-\]              : {token, {')',  TokenLine}}.
+\[              : {token, {'[',  TokenLine}}.
+\]              : {token, {']',  TokenLine}}.
+\{              : {token, {'{',  TokenLine}}.
+\}              : {token, {'}',  TokenLine}}.
+\".*\"          : {token, {string,  TokenLine, string_to_binary(TokenChars)}}.
 \".*\"          : {token, {string,  TokenLine, string_to_binary(TokenChars)}}.
 {Whitespace}+   : skip_token.
 '{Alpha}+       : {token, {symbol, TokenLine, symbol_to_atom(TokenChars)}}.

@@ -2,3 +2,28 @@
 
 (def split_by_comma ['str String] String
   (Elixir.String.split str ","))
+
+(def (split_by_comma str)
+  (Elixir.String.split str ","))
+
+(-> String String)
+(def split_by_comma [str]
+  (Elixir.String.split str ","))
+
+
+(doc +
+  """
+  Takes an arbitrary number of Integers and sums them.
+  """)
+(sig + Integer... Integer)
+(def + [0]
+  0)
+
+(def (+ x)
+  x)
+
+(def pair ["abc" String "def" String] {String String}
+  {"abc" "def"})
+
+(def pair ['x String 'y String] {String String}
+  {x y})

@@ -9,7 +9,7 @@ defmodule ParserTest do
       (defmodule Derie)
       """
 
-      assert {:ok, [{:"(", 1}, {:atom, 1, :defmodule}, {:symbol, 1, :Derie}, {:")", 1}], _} =
+      assert {:ok, [{:"(", 1}, {:atom, 1, :defmodule}, {:symbol, 1, :Derie}, {:")", 1}], 2} ==
                Parser.tokenize(code)
     end
 
@@ -23,32 +23,41 @@ defmodule ParserTest do
                 {:"(", 1},
                 {:atom, 1, :def},
                 {:atom, 1, :name},
-                {:"(", 1},
+                {:"[", 1},
                 {:symbol, 1, :x},
                 {:symbol, 1, :Integer},
-                {:")", 1},
+                {:"]", 1},
                 {:symbol, 1, :Integer},
                 {:atom, 1, :x},
                 {:")", 1}
-              ], _} = Parser.tokenize(code)
+              ], 2} == Parser.tokenize(code)
     end
 
-    test "string literal" do
+    test "literals" do
       code = ~S"""
-      (def name [] String "abc")
+      (def literals [] String
+        {"abc" [1 2 3 4]})
       """
 
       assert {:ok,
               [
                 {:"(", 1},
                 {:atom, 1, :def},
-                {:atom, 1, :name},
-                {:"(", 1},
-                {:")", 1},
+                {:atom, 1, :literals},
+                {:"[", 1},
+                {:"]", 1},
                 {:symbol, 1, :String},
-                {:string, 1, "abc"},
-                {:")", 1}
-              ], 2} = Parser.tokenize(code)
+                {:"{", 2},
+                {:string, 2, "abc"},
+                {:"[", 2},
+                {:integer, 2, 1},
+                {:integer, 2, 2},
+                {:integer, 2, 3},
+                {:integer, 2, 4},
+                {:"]", 2},
+                {:"}", 2},
+                {:")", 2}
+              ], 3} == Parser.tokenize(code)
     end
   end
 
@@ -76,7 +85,7 @@ defmodule ParserTest do
                 [
                   {:atom, 2, :def},
                   {:atom, 2, :name},
-                  [],
+                  {:list, 2, []},
                   {:symbol, 2, :Integer},
                   {:integer, 2, 0}
                 ]
@@ -95,7 +104,7 @@ defmodule ParserTest do
                 [
                   {:atom, 2, :def},
                   {:atom, 2, :name},
-                  [],
+                  {:list, 2, []},
                   {:symbol, 2, :Integer},
                   [{:atom, 2, :+}, {:integer, 2, 1}, {:integer, 2, 2}]
                 ]
@@ -112,28 +121,40 @@ defmodule ParserTest do
                 [
                   {:atom, 1, :def},
                   {:atom, 1, :name},
-                  [{:symbol, 1, :x}, {:symbol, 1, :Integer}],
+                  {:list, 1, [{:symbol, 1, :x}, {:symbol, 1, :Integer}]},
                   {:symbol, 1, :Integer},
                   {:atom, 1, :x}
                 ]
-              ]} = Parser.parse(code)
+              ]} == Parser.parse(code)
     end
 
-    test "string literal" do
+    test "literals" do
       code = ~S"""
-      (def name [] String "abc")
+      (def literals [] String
+        {"abc" [] [1 2 3 4]})
       """
 
       assert {:ok,
               [
                 [
                   {:atom, 1, :def},
-                  {:atom, 1, :name},
-                  [],
+                  {:atom, 1, :literals},
+                  {:list, 1, []},
                   {:symbol, 1, :String},
-                  {:string, 1, "abc"}
+                  {:tuple, 2,
+                   [
+                     {:string, 2, "abc"},
+                     {:list, 2, []},
+                     {:list, 2,
+                      [
+                        {:integer, 2, 1},
+                        {:integer, 2, 2},
+                        {:integer, 2, 3},
+                        {:integer, 2, 4}
+                      ]}
+                   ]}
                 ]
-              ]} = Parser.parse(code)
+              ]} == Parser.parse(code)
     end
   end
 end

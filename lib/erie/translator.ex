@@ -31,7 +31,7 @@ defmodule Erie.Translator do
   def translate(struct, [form | tail], ret) do
     case form do
       [{:atom, _, :def}, {:atom, line, name}, params, {:symbol, _l2, _return_type} | body] ->
-        body = translate_body(body)
+        body = body |> translate_body([]) |> Enum.reverse()
         params = translate_params(params)
         arity = Enum.count(params)
 
@@ -51,14 +51,6 @@ defmodule Erie.Translator do
 
   def translate(struct, [], ret), do: %{struct | ast: ret}
 
-  def translate_body(list) do
-    list |> translate_body([]) |> Enum.reverse()
-  end
-
-  def translate_body([[{:atom, line, :+}, p1, p2] | rest], accum) do
-    translate_body(rest, [{:op, line, :+, p1, p2} | accum])
-  end
-
   def translate_body([[{:atom, line, val} | func_args] | rest], accum) do
     args = translate_body(func_args, [])
     ast = {:call, line, {:atom, line, val}, args}
@@ -75,12 +67,22 @@ defmodule Erie.Translator do
     translate_body(rest, [ast | accum])
   end
 
+  def translate_body([{:atom, line, val} | rest], accum) do
+    translate_body(rest, [{:var, line, val} | accum])
+  end
+
   def translate_body([{:integer, line, val} | rest], accum) do
     translate_body(rest, [{:integer, line, val} | accum])
   end
 
-  def translate_body([{:atom, line, val} | rest], accum) do
-    translate_body(rest, [{:var, line, val} | accum])
+  def translate_body([{:list, line, val} | rest], accum) do
+    tuple =
+      val
+      |> translate_body([])
+      |> Enum.reverse()
+      |> translate_cons(line)
+
+    translate_body(rest, [tuple | accum])
   end
 
   def translate_body([{:string, line, val} | rest], accum) do
@@ -91,11 +93,25 @@ defmodule Erie.Translator do
     translate_body(rest, [tuple | accum])
   end
 
+  def translate_body([{:tuple, line, val} | rest], accum) do
+    list = val |> translate_body([]) |> Enum.reverse()
+    tuple = {:tuple, line, list}
+    translate_body(rest, [tuple | accum])
+  end
+
   def translate_body([], accum) do
     accum
   end
 
-  def translate_params(list) do
+  def translate_cons([{_, line, _} = head | tail], _) do
+    {:cons, line, head, translate_cons(tail, line)}
+  end
+
+  def translate_cons([], line) do
+    {nil, line}
+  end
+
+  def translate_params({:list, _line, list}) do
     list |> translate_params([]) |> Enum.reverse()
   end
 
