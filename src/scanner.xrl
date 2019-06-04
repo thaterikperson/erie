@@ -6,20 +6,19 @@ Whitespace = [\n\t\s,;]
 
 Rules.
 
-{Digit}+\.{Digit}+   : {token, {float,  TokenLine, TokenChars}}.
-{Digit}+   : {token, {integer,  TokenLine, list_to_integer(TokenChars)}}.
-\(              : {token, {'(',  TokenLine}}.
-\)              : {token, {')',  TokenLine}}.
-\[              : {token, {'[',  TokenLine}}.
-\]              : {token, {']',  TokenLine}}.
-\{              : {token, {'{',  TokenLine}}.
-\}              : {token, {'}',  TokenLine}}.
-\".*\"          : {token, {string,  TokenLine, string_to_binary(TokenChars)}}.
-\".*\"          : {token, {string,  TokenLine, string_to_binary(TokenChars)}}.
-{Whitespace}+   : skip_token.
-'{Alpha}+       : {token, {symbol, TokenLine, symbol_to_atom(TokenChars)}}.
-{Upper}{Alpha}* : {token, {symbol, TokenLine, list_to_atom(TokenChars)}}.
-{Alpha}+        : {token, {atom, TokenLine, list_to_atom(TokenChars)}}.
+\(                 : {token, {'(',  TokenLine}}.
+\)                 : {token, {')',  TokenLine}}.
+\[                 : {token, {'[',  TokenLine}}.
+\]                 : {token, {']',  TokenLine}}.
+\{                 : {token, {'{',  TokenLine}}.
+\}                 : {token, {'}',  TokenLine}}.
+\".*\"             : {token, {string, TokenLine, string_to_binary(TokenChars)}}.
+{Digit}+\.{Digit}+ : {token, {float, TokenLine, TokenChars}}.
+{Digit}+           : {token, {integer, TokenLine, list_to_integer(TokenChars)}}.
+'{Alpha}+          : {token, {symbol, TokenLine, symbol_to_atom(TokenChars)}}.
+{Upper}{Alpha}*    : {token, {symbol, TokenLine, list_to_atom(TokenChars)}}.
+{Alpha}+           : {token, {atom, TokenLine, list_to_atom(TokenChars)}}.
+{Whitespace}+      : skip_token.
 
 Erlang code.
 
