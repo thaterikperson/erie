@@ -8,7 +8,6 @@ defmodule Erie.Application do
   def start(_type, _args) do
     # List all child processes to be supervised
     children = [
-      Erie
       # Starts a worker by calling: Erie.Worker.start_link(arg)
       # {Erie.Worker, arg}
     ]

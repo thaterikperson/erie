@@ -1,16 +1,4 @@
 defmodule Erie do
-  use GenServer
-
-  def start_link(config) do
-    GenServer.start_link(__MODULE__, config)
-  end
-
-  def init(config) do
-    # do_all()
-
-    {:ok, config}
-  end
-
   def do_all() do
     dir = File.cwd!()
     file = Path.join(dir, "app.erie")
