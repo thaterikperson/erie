@@ -29,7 +29,7 @@ defmodule TranslatorTest do
                      ]}
                   ]}
                ]}
-            ]} == Translator.to_ast(forms)
+            ]} == Translator.to_eaf(forms)
   end
 
   test "0 arity" do
@@ -48,7 +48,7 @@ defmodule TranslatorTest do
                [
                  {:clause, 2, [], [], [{:integer, 2, 1}]}
                ]}
-            ]} == Translator.to_ast(forms)
+            ]} == Translator.to_eaf(forms)
   end
 
   test "1 arity" do
@@ -67,7 +67,7 @@ defmodule TranslatorTest do
                [
                  {:clause, 2, [{:var, 2, :x}], [], [{:var, 2, :x}]}
                ]}
-            ]} == Translator.to_ast(forms)
+            ]} == Translator.to_eaf(forms)
   end
 
   test "local function call" do
@@ -95,7 +95,7 @@ defmodule TranslatorTest do
                     {:call, 4, {:atom, 4, :identity}, [{:integer, 4, 3}]}
                   ]}
                ]}
-            ]} == Translator.to_ast(forms)
+            ]} == Translator.to_eaf(forms)
   end
 
   test "Elixir function call" do
@@ -122,6 +122,6 @@ defmodule TranslatorTest do
                      ]}
                   ]}
                ]}
-            ]} == Translator.to_ast(forms)
+            ]} == Translator.to_eaf(forms)
   end
 end

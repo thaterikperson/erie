@@ -2,7 +2,7 @@ defmodule Erie.Translator do
   alias Erie.Translator
   defstruct [:module, :functions, :ast]
 
-  def to_ast(forms) do
+  def to_eaf(forms) do
     with {:ok, mod, mod_line, forms} <- extract_module(forms) do
       struct =
         %Translator{module: {mod, mod_line}, functions: [], ast: []}
