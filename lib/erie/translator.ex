@@ -30,9 +30,13 @@ defmodule Erie.Translator do
 
   def translate(struct, [form | tail], ret) do
     case form do
-      [{:atom, _, :def}, {:atom, line, name}, params, {:symbol, _l2, _return_type} | body] ->
+      [{:atom, _, :sig}, {:atom, _line, _name} | _params] ->
+        # ignoring type information for now
+        translate(struct, tail, ret)
+
+      [{:atom, _, :def}, {:atom, line, name}, {:list, _, params} | body] ->
         body = body |> translate_body([]) |> Enum.reverse()
-        params = translate_params(params)
+        params = params |> translate_params([]) |> Enum.reverse()
         arity = Enum.count(params)
 
         %{struct | functions: [{name, arity} | struct.functions]}
@@ -58,12 +62,12 @@ defmodule Erie.Translator do
   end
 
   def translate_body([[{:symbol, line, val} | func_args] | rest], accum) do
-    args = translate_body(func_args, []) |> Enum.reverse()
+    args = func_args |> translate_body([]) |> Enum.reverse()
     [func | mod_parts] = val |> Atom.to_string() |> String.split(".") |> Enum.reverse()
     mod = mod_parts |> Enum.reverse() |> Enum.join(".") |> String.to_atom()
     func = String.to_atom(func)
 
-    ast = {:call, line, {:remote, line, {:atom, 3, mod}, {:atom, 3, func}}, args}
+    ast = {:call, line, {:remote, line, {:atom, line, mod}, {:atom, line, func}}, args}
     translate_body(rest, [ast | accum])
   end
 
@@ -111,11 +115,7 @@ defmodule Erie.Translator do
     {nil, line}
   end
 
-  def translate_params({:list, _line, list}) do
-    list |> translate_params([]) |> Enum.reverse()
-  end
-
-  def translate_params([{:symbol, line, name}, {:symbol, _, _type} | rest], accum) do
+  def translate_params([{:atom, line, name} | rest], accum) do
     translate_params(rest, [{:var, line, name} | accum])
   end
 

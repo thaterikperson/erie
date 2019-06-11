@@ -2,7 +2,7 @@ Definitions.
 Digit      = [0-9]
 Upper      = [A-Z]
 Alpha      = [A-Za-z\._!\+]
-Whitespace = [\n\t\s,;]
+Whitespace = [\n\t\s,]
 
 Rules.
 

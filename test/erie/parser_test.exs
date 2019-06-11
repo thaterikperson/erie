@@ -15,49 +15,59 @@ defmodule ParserTest do
 
     test "1 arity function" do
       code = ~S"""
-      (def name ['x Integer] Integer x)
+      (sig name Integer Integer)
+      (def name [x] x)
       """
 
       assert {:ok,
               [
                 {:"(", 1},
-                {:atom, 1, :def},
+                {:atom, 1, :sig},
                 {:atom, 1, :name},
-                {:"[", 1},
-                {:symbol, 1, :x},
                 {:symbol, 1, :Integer},
-                {:"]", 1},
                 {:symbol, 1, :Integer},
-                {:atom, 1, :x},
-                {:")", 1}
-              ], 2} == Parser.tokenize(code)
+                {:")", 1},
+                {:"(", 2},
+                {:atom, 2, :def},
+                {:atom, 2, :name},
+                {:"[", 2},
+                {:atom, 2, :x},
+                {:"]", 2},
+                {:atom, 2, :x},
+                {:")", 2}
+              ], 3} == Parser.tokenize(code)
     end
 
     test "literals" do
       code = ~S"""
-      (def literals [] String
+      (sig literals Any)
+      (def literals []
         {"abc" [1 2 3 4]})
       """
 
       assert {:ok,
               [
                 {:"(", 1},
-                {:atom, 1, :def},
+                {:atom, 1, :sig},
                 {:atom, 1, :literals},
-                {:"[", 1},
-                {:"]", 1},
-                {:symbol, 1, :String},
-                {:"{", 2},
-                {:string, 2, "abc"},
+                {:symbol, 1, :Any},
+                {:")", 1},
+                {:"(", 2},
+                {:atom, 2, :def},
+                {:atom, 2, :literals},
                 {:"[", 2},
-                {:integer, 2, 1},
-                {:integer, 2, 2},
-                {:integer, 2, 3},
-                {:integer, 2, 4},
                 {:"]", 2},
-                {:"}", 2},
-                {:")", 2}
-              ], 3} == Parser.tokenize(code)
+                {:"{", 3},
+                {:string, 3, "abc"},
+                {:"[", 3},
+                {:integer, 3, 1},
+                {:integer, 3, 2},
+                {:integer, 3, 3},
+                {:integer, 3, 4},
+                {:"]", 3},
+                {:"}", 3},
+                {:")", 3}
+              ], 4} == Parser.tokenize(code)
     end
   end
 
@@ -76,18 +86,19 @@ defmodule ParserTest do
     test "0 arg basic function" do
       code = ~S"""
       (defmodule Derie)
-      (def name [] Integer 0)
+      (sig name Integer)
+      (def name [] 0)
       """
 
       assert {:ok,
               [
                 [{:atom, 1, :defmodule}, {:symbol, 1, :Derie}],
+                [{:atom, 2, :sig}, {:atom, 2, :name}, {:symbol, 2, :Integer}],
                 [
-                  {:atom, 2, :def},
-                  {:atom, 2, :name},
-                  {:list, 2, []},
-                  {:symbol, 2, :Integer},
-                  {:integer, 2, 0}
+                  {:atom, 3, :def},
+                  {:atom, 3, :name},
+                  {:list, 3, []},
+                  {:integer, 3, 0}
                 ]
               ]} == Parser.parse(code)
     end
@@ -95,62 +106,74 @@ defmodule ParserTest do
     test "0 arg function calls function" do
       code = ~S"""
       (defmodule Derie)
-      (def name [] Integer (+ 1 2))
+      (sig name Integer)
+      (def name [] (+ 1 2))
       """
 
       assert {:ok,
               [
                 [{:atom, 1, :defmodule}, {:symbol, 1, :Derie}],
+                [{:atom, 2, :sig}, {:atom, 2, :name}, {:symbol, 2, :Integer}],
                 [
-                  {:atom, 2, :def},
-                  {:atom, 2, :name},
-                  {:list, 2, []},
-                  {:symbol, 2, :Integer},
-                  [{:atom, 2, :+}, {:integer, 2, 1}, {:integer, 2, 2}]
+                  {:atom, 3, :def},
+                  {:atom, 3, :name},
+                  {:list, 3, []},
+                  [{:atom, 3, :+}, {:integer, 3, 1}, {:integer, 3, 2}]
                 ]
               ]} == Parser.parse(code)
     end
 
     test "1 arity function" do
       code = ~S"""
-      (def name ['x Integer] Integer x)
+      (sig name Integer Integer)
+      (def name [x] x)
       """
 
       assert {:ok,
               [
                 [
-                  {:atom, 1, :def},
+                  {:atom, 1, :sig},
                   {:atom, 1, :name},
-                  {:list, 1, [{:symbol, 1, :x}, {:symbol, 1, :Integer}]},
                   {:symbol, 1, :Integer},
-                  {:atom, 1, :x}
+                  {:symbol, 1, :Integer}
+                ],
+                [
+                  {:atom, 2, :def},
+                  {:atom, 2, :name},
+                  {:list, 2, [{:atom, 2, :x}]},
+                  {:atom, 2, :x}
                 ]
               ]} == Parser.parse(code)
     end
 
     test "literals" do
       code = ~S"""
-      (def literals [] String
+      (sig literals Any)
+      (def literals []
         {"abc" [] [1 2 3 4]})
       """
 
       assert {:ok,
               [
                 [
-                  {:atom, 1, :def},
+                  {:atom, 1, :sig},
                   {:atom, 1, :literals},
-                  {:list, 1, []},
-                  {:symbol, 1, :String},
-                  {:tuple, 2,
+                  {:symbol, 1, :Any}
+                ],
+                [
+                  {:atom, 2, :def},
+                  {:atom, 2, :literals},
+                  {:list, 2, []},
+                  {:tuple, 3,
                    [
-                     {:string, 2, "abc"},
-                     {:list, 2, []},
-                     {:list, 2,
+                     {:string, 3, "abc"},
+                     {:list, 3, []},
+                     {:list, 3,
                       [
-                        {:integer, 2, 1},
-                        {:integer, 2, 2},
-                        {:integer, 2, 3},
-                        {:integer, 2, 4}
+                        {:integer, 3, 1},
+                        {:integer, 3, 2},
+                        {:integer, 3, 3},
+                        {:integer, 3, 4}
                       ]}
                    ]}
                 ]
