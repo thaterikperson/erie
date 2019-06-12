@@ -4,7 +4,7 @@ defmodule TranslatorTest do
   doctest Erie.Parser
 
   test "literals" do
-    code = ~S"""
+    code = """
     (defmodule Core)
     (sig literals Any)
     (def literals []
@@ -34,7 +34,7 @@ defmodule TranslatorTest do
   end
 
   test "0 arity" do
-    code = ~S"""
+    code = """
     (defmodule Derie)
     (sig name Integer)
     (def name [] 1)
@@ -54,7 +54,7 @@ defmodule TranslatorTest do
   end
 
   test "1 arity" do
-    code = ~S"""
+    code = """
     (defmodule Derie)
     (sig name Integer Integer)
     (def name [x] x)
@@ -74,7 +74,7 @@ defmodule TranslatorTest do
   end
 
   test "local function call" do
-    code = ~S"""
+    code = """
     (defmodule Core)
     (sig identity Integer Integer)
     (def identity [x] x)
@@ -104,7 +104,7 @@ defmodule TranslatorTest do
   end
 
   test "Elixir function call" do
-    code = ~S"""
+    code = """
     (defmodule Core)
     (sig split_by_comma String String)
     (def split_by_comma [str]
@@ -125,6 +125,38 @@ defmodule TranslatorTest do
                      [
                        {:var, 4, :str},
                        {:bin, 4, [{:bin_element, 4, {:string, 4, ','}, :default, :default}]}
+                     ]}
+                  ]}
+               ]}
+            ]} == Translator.to_eaf(forms)
+  end
+
+  test "case" do
+    code = """
+    (defmodule Core)
+    (sig split_by String Symbol String)
+    (def split_by [str kind]
+      (case kind
+        ['comma str]
+        ['whitespace str]
+        [_ str]))
+    """
+
+    {:ok, forms} = Parser.parse(code)
+
+    assert {:ok,
+            [
+              {:attribute, 1, :module, :"Erie.Core"},
+              {:attribute, 1, :export, [{:split_by, 2}]},
+              {:function, 3, :split_by, 2,
+               [
+                 {:clause, 3, [{:var, 3, :str}, {:var, 3, :kind}], [],
+                  [
+                    {:case, 4, {:var, 4, :kind},
+                     [
+                       {:clause, 5, [{:atom, 5, :comma}], [], [{:var, 5, :str}]},
+                       {:clause, 6, [{:atom, 6, :whitespace}], [], [{:var, 6, :str}]},
+                       {:clause, 7, [{:var, 7, :_}], [], [{:var, 7, :str}]}
                      ]}
                   ]}
                ]}

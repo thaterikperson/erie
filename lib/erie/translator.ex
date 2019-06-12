@@ -55,8 +55,16 @@ defmodule Erie.Translator do
 
   def translate(struct, [], ret), do: %{struct | ast: ret}
 
+  def translate_body([[{:atom, line, :case}, matcher | matches] | rest], accum) do
+    [matcher] = translate_body([matcher], [])
+    clauses = matches |> translate_case([]) |> Enum.reverse()
+    ast = {:case, line, matcher, clauses}
+
+    translate_body(rest, [ast | accum])
+  end
+
   def translate_body([[{:atom, line, val} | func_args] | rest], accum) do
-    args = translate_body(func_args, [])
+    args = func_args |> translate_body([]) |> Enum.reverse()
     ast = {:call, line, {:atom, line, val}, args}
     translate_body(rest, [ast | accum])
   end
@@ -105,6 +113,28 @@ defmodule Erie.Translator do
 
   def translate_body([], accum) do
     accum
+  end
+
+  def translate_case([{:list, line, [match | body]} | rest], accum) do
+    body = body |> translate_body([]) |> Enum.reverse()
+    ast = {:clause, line, [translate_case_clause(match)], [], body}
+    translate_case(rest, [ast | accum])
+  end
+
+  def translate_case([], accum) do
+    accum
+  end
+
+  def translate_case_clause({:symbol, line, symbol}) do
+    {:atom, line, symbol}
+  end
+
+  def translate_case_clause({:atom, line, :_}) do
+    {:var, line, :_}
+  end
+
+  def translate_case_clause({:atom, line, atom}) do
+    {:var, line, atom}
   end
 
   def translate_cons([{_, line, _} = head | tail], _) do
