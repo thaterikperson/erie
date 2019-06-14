@@ -63,6 +63,23 @@ defmodule Erie.Translator do
     translate_body(rest, [ast | accum])
   end
 
+  def translate_body(
+        [[{:atom, line, :lambda}, {:list, clause_line, params} | lambda_body] | rest],
+        accum
+      ) do
+    body = lambda_body |> translate_body([]) |> Enum.reverse()
+    params = params |> translate_params([]) |> Enum.reverse()
+
+    ast =
+      {:fun, line,
+       {:clauses,
+        [
+          {:clause, clause_line, params, [], body}
+        ]}}
+
+    translate_body(rest, [ast | accum])
+  end
+
   def translate_body([[{:atom, line, val} | func_args] | rest], accum) do
     args = func_args |> translate_body([]) |> Enum.reverse()
     ast = {:call, line, {:atom, line, val}, args}
