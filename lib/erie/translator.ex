@@ -35,7 +35,7 @@ defmodule Erie.Translator do
         translate(struct, tail, ret)
 
       [{:atom, _, :def}, {:atom, line, name}, {:list, _, params} | body] ->
-        body = body |> translate_body([]) |> Enum.reverse()
+        body = translate_body(body)
         params = params |> translate_params([]) |> Enum.reverse()
         arity = Enum.count(params)
 
@@ -55,6 +55,18 @@ defmodule Erie.Translator do
 
   def translate(struct, [], ret), do: %{struct | ast: ret}
 
+  def translate_body(list) do
+    list |> translate_body([]) |> Enum.reverse()
+  end
+
+  def translate_body([[[{_, line, _} = head | tail] | params] | rest], accum) do
+    [body] = translate_body([[head | tail]])
+    params = translate_body(params)
+    ast = {:call, line, body, params}
+
+    translate_body(rest, [ast | accum])
+  end
+
   def translate_body([[{:atom, line, :case}, matcher | matches] | rest], accum) do
     [matcher] = translate_body([matcher], [])
     clauses = matches |> translate_case([]) |> Enum.reverse()
@@ -67,7 +79,7 @@ defmodule Erie.Translator do
         [[{:atom, line, :lambda}, {:list, clause_line, params} | lambda_body] | rest],
         accum
       ) do
-    body = lambda_body |> translate_body([]) |> Enum.reverse()
+    body = translate_body(lambda_body)
     params = params |> translate_params([]) |> Enum.reverse()
 
     ast =
@@ -81,13 +93,13 @@ defmodule Erie.Translator do
   end
 
   def translate_body([[{:atom, line, val} | func_args] | rest], accum) do
-    args = func_args |> translate_body([]) |> Enum.reverse()
+    args = translate_body(func_args)
     ast = {:call, line, {:atom, line, val}, args}
     translate_body(rest, [ast | accum])
   end
 
   def translate_body([[{:symbol, line, val} | func_args] | rest], accum) do
-    args = func_args |> translate_body([]) |> Enum.reverse()
+    args = translate_body(func_args)
     [func | mod_parts] = val |> Atom.to_string() |> String.split(".") |> Enum.reverse()
     mod = mod_parts |> Enum.reverse() |> Enum.join(".") |> String.to_atom()
     func = String.to_atom(func)
@@ -105,11 +117,7 @@ defmodule Erie.Translator do
   end
 
   def translate_body([{:list, line, val} | rest], accum) do
-    tuple =
-      val
-      |> translate_body([])
-      |> Enum.reverse()
-      |> translate_cons(line)
+    tuple = val |> translate_body() |> translate_cons(line)
 
     translate_body(rest, [tuple | accum])
   end
@@ -123,7 +131,7 @@ defmodule Erie.Translator do
   end
 
   def translate_body([{:tuple, line, val} | rest], accum) do
-    list = val |> translate_body([]) |> Enum.reverse()
+    list = translate_body(val)
     tuple = {:tuple, line, list}
     translate_body(rest, [tuple | accum])
   end
@@ -133,7 +141,7 @@ defmodule Erie.Translator do
   end
 
   def translate_case([{:list, line, [match | body]} | rest], accum) do
-    body = body |> translate_body([]) |> Enum.reverse()
+    body = translate_body(body)
     ast = {:clause, line, [translate_case_clause(match)], [], body}
     translate_case(rest, [ast | accum])
   end

@@ -163,31 +163,61 @@ defmodule TranslatorTest do
             ]} == Translator.to_eaf(forms)
   end
 
-  test "let" do
-    code = """
-    (defmodule Core)
-    (sig lambdas (List Integer))
-    (def lambdas []
-      (Elixir.Enum.map [1] (lambda [x] x)))
-    """
+  describe "lambda" do
+    test "as a parameter to a function" do
+      code = """
+      (defmodule Core)
+      (sig lambdas (List Integer))
+      (def lambdas []
+        (Elixir.Enum.map [1] (lambda [x] x)))
+      """
 
-    {:ok, forms} = Parser.parse(code)
+      {:ok, forms} = Parser.parse(code)
 
-    assert {:ok,
-            [
-              {:attribute, 1, :module, :"Erie.Core"},
-              {:attribute, 1, :export, [{:lambdas, 0}]},
-              {:function, 3, :lambdas, 0,
-               [
-                 {:clause, 3, [], [],
-                  [
-                    {:call, 4, {:remote, 4, {:atom, 4, :"Elixir.Enum"}, {:atom, 4, :map}},
-                     [
-                       {:cons, 4, {:integer, 4, 1}, {nil, 4}},
-                       {:fun, 4, {:clauses, [{:clause, 4, [{:var, 4, :x}], [], [{:var, 4, :x}]}]}}
-                     ]}
-                  ]}
-               ]}
-            ]} == Translator.to_eaf(forms)
+      assert {:ok,
+              [
+                {:attribute, 1, :module, :"Erie.Core"},
+                {:attribute, 1, :export, [{:lambdas, 0}]},
+                {:function, 3, :lambdas, 0,
+                 [
+                   {:clause, 3, [], [],
+                    [
+                      {:call, 4, {:remote, 4, {:atom, 4, :"Elixir.Enum"}, {:atom, 4, :map}},
+                       [
+                         {:cons, 4, {:integer, 4, 1}, {nil, 4}},
+                         {:fun, 4,
+                          {:clauses, [{:clause, 4, [{:var, 4, :x}], [], [{:var, 4, :x}]}]}}
+                       ]}
+                    ]}
+                 ]}
+              ]} == Translator.to_eaf(forms)
+    end
+
+    test "executed anonymously" do
+      code = """
+      (defmodule Core)
+      (sig lambdas Integer)
+      (def lambdas []
+        ((lambda [x] x) 1))
+      """
+
+      {:ok, forms} = Parser.parse(code)
+
+      assert {:ok,
+              [
+                {:attribute, 1, :module, :"Erie.Core"},
+                {:attribute, 1, :export, [{:lambdas, 0}]},
+                {:function, 3, :lambdas, 0,
+                 [
+                   {:clause, 3, [], [],
+                    [
+                      {:call, 4,
+                       {:fun, 4,
+                        {:clauses, [{:clause, 4, [{:var, 4, :x}], [], [{:var, 4, :x}]}]}},
+                       [{:integer, 4, 1}]}
+                    ]}
+                 ]}
+              ]} == Translator.to_eaf(forms)
+    end
   end
 end
