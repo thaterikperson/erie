@@ -14,4 +14,17 @@ defmodule Erie.Parser do
   def tokenize(contents) do
     contents |> String.to_charlist() |> :scanner.string()
   end
+
+  def to_ast(parsed) do
+    case parsed do
+      list when is_list(list) ->
+        Enum.map(parsed, &to_ast/1)
+
+      {_category, _line, val} ->
+        to_ast(val)
+
+      el ->
+        el
+    end
+  end
 end

@@ -180,4 +180,52 @@ defmodule ParserTest do
               ]} == Parser.parse(code)
     end
   end
+
+  describe "to_ast" do
+    test "comment" do
+      code = """
+      (defmacro comment [ast]
+        [])
+
+      (comment 1)
+      """
+
+      {:ok, parsed} = Parser.parse(code)
+
+      assert [
+               [
+                 :defmacro,
+                 :comment,
+                 [:ast],
+                 []
+               ],
+               [:comment, 1]
+             ] == Parser.to_ast(parsed)
+    end
+
+    test "infix" do
+      code = """
+      (defmacro infix [calc]
+        [(Elixir.Enum.at 1) (Elixir.Enum.at 0) (Elixir.Enum.at 2)])
+
+      (infix (1 + 2))
+      """
+
+      {:ok, parsed} = Parser.parse(code)
+
+      assert [
+               [
+                 :defmacro,
+                 :infix,
+                 [:calc],
+                 [
+                   [:"Elixir.Enum.at", 1],
+                   [:"Elixir.Enum.at", 0],
+                   [:"Elixir.Enum.at", 2]
+                 ]
+               ],
+               [:infix, [1, :+, 2]]
+             ] == Parser.to_ast(parsed)
+    end
+  end
 end

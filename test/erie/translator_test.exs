@@ -8,7 +8,7 @@ defmodule TranslatorTest do
     (defmodule Core)
     (sig literals Any)
     (def literals []
-      {"abc" [] [1 2 3]})
+      {"abc" [] nil [1 2 3]})
     """
 
     {:ok, forms} = Parser.parse(code)
@@ -25,6 +25,7 @@ defmodule TranslatorTest do
                      [
                        {:bin, 4, [{:bin_element, 4, {:string, 4, 'abc'}, :default, :default}]},
                        {nil, 4},
+                       {:atom, 4, nil},
                        {:cons, 4, {:integer, 4, 1},
                         {:cons, 4, {:integer, 4, 2}, {:cons, 4, {:integer, 4, 3}, {nil, 4}}}}
                      ]}
@@ -218,6 +219,24 @@ defmodule TranslatorTest do
                     ]}
                  ]}
               ]} == Translator.to_eaf(forms)
+    end
+  end
+
+  describe "macro module" do
+    test "simple macro" do
+      code = """
+      (defmodule Core)
+      (defmacro comment [ast]
+        [])
+
+      (def loop []
+        (comment 1))
+      """
+
+      {:ok, forms} = Parser.parse(code)
+      {:ok, translator} = Translator.from_parsed(forms)
+      %Translator{functions: functions} = Translator.to_macro_module_eaf(translator)
+      assert functions == [comment: 1]
     end
   end
 end
