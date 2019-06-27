@@ -1,25 +1,9 @@
 (defmodule Core)
 
-(sig split_by_comma String String)
-(def split_by_comma [str]
-  (Elixir.String.split str ","))
+(def loop []
+  (comment
+    (Elixir.Enum.map [1 2 3]
+      (lambda [x] (Elixir.IO.inspect(x))))))
 
-(sig identity Integer Integer)
-(def identity [x]
-  x)
-
-(sig split_by String Symbol String)
-(def split_by [str kind]
-  (case kind
-    ['comma (Elixir.String.split str ",")]
-    ['whitespace (Elixir.String.split str)]
-    [_ str]))
-
-(sig lambdas (List Integer))
-(def lambdas []
-  (Elixir.Enum.map [1] (lambda [x] x)))
-
-(sig comb)
-(def comb [x y]
-  (Elixir.Enum.reduce [x y] [1 2 3]
-    (lambda [p acc] ('erlang.++ acc p))))
+(defmacro comment [ast]
+  nil)

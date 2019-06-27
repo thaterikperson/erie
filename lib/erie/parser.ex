@@ -27,4 +27,17 @@ defmodule Erie.Parser do
         el
     end
   end
+
+  def ast_to_parsed(nil, line) do
+    {:atom, line, nil}
+  end
+
+  def ast_to_parsed(list, line) when is_list(list) do
+    list = Enum.map(list, fn x -> ast_to_parsed(x, line) end)
+    {:list, line, list}
+  end
+
+  def ast_to_parsed(ast, _line) do
+    ast
+  end
 end

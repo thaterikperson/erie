@@ -235,8 +235,7 @@ defmodule TranslatorTest do
 
       {:ok, forms} = Parser.parse(code)
       {:ok, translator} = Translator.from_parsed(forms)
-      %Translator{functions: functions} = Translator.to_macro_module_eaf(translator)
-      assert functions == [comment: 1]
+      assert translator.macros == [comment: 1]
     end
   end
 end

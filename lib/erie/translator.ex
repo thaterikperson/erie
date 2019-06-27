@@ -9,10 +9,9 @@ defmodule Erie.Translator do
         |> translate(Enum.reverse(forms), [])
         |> prepend_headers()
 
-      # macro_struct = to_macro_module_eaf(struct)
+      IO.inspect(struct, label: "before maco")
       Macro.compile_macros(struct)
 
-      # %Translator{module: {mod, mod_line}, functions: [], macros: [], macros_ast: [], ast: []}
       struct =
         %{struct | ast: [], functions: []}
         |> translate(Enum.reverse(forms), [])
@@ -28,8 +27,12 @@ defmodule Erie.Translator do
     end
   end
 
-  def to_macro_module_eaf(%{module: {module, _}} = struct) do
-    module = String.to_atom("MACRO." <> Atom.to_string(module))
+  def macro_module_name(%{module: {module, _}}) do
+    String.to_atom("MACRO." <> Atom.to_string(module))
+  end
+
+  def to_macro_module_eaf(struct) do
+    module = macro_module_name(struct)
 
     %Translator{module: {module, 1}, ast: struct.macros_ast, functions: struct.macros}
     |> prepend_headers()
@@ -132,7 +135,16 @@ defmodule Erie.Translator do
     macro_names = Enum.map(struct.macros, fn {name, _arity} -> name end)
 
     if Enum.member?(macro_names, val) do
-      raise "execute the macro"
+      args_ast = Erie.Parser.to_ast(func_args)
+      macro_module = macro_module_name(struct)
+
+      [new_ast] =
+        macro_module
+        |> apply(val, [args_ast])
+        |> Erie.Parser.ast_to_parsed(line)
+        |> (fn parsed -> translate_body(struct, [parsed]) end).()
+
+      translate_body(struct, rest, [new_ast | accum])
     else
       args = translate_body(struct, func_args)
       ast = {:call, line, {:atom, line, val}, args}
