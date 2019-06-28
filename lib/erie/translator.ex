@@ -197,6 +197,10 @@ defmodule Erie.Translator do
     translate_body(struct, rest, [tuple | accum])
   end
 
+  def translate_body(struct, [{:symbol, line, val} | rest], accum) do
+    translate_body(struct, rest, [{:atom, line, val} | accum])
+  end
+
   def translate_body(struct, [{:tuple, line, val} | rest], accum) do
     list = translate_body(struct, val)
     tuple = {:tuple, line, list}
@@ -229,7 +233,8 @@ defmodule Erie.Translator do
     {:var, line, atom}
   end
 
-  def translate_cons([{_, line, _} = head | tail], _) do
+  def translate_cons([head | tail], _) do
+    line = elem(head, 1)
     {:cons, line, head, translate_cons(tail, line)}
   end
 

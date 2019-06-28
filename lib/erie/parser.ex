@@ -33,8 +33,15 @@ defmodule Erie.Parser do
   end
 
   def ast_to_parsed(list, line) when is_list(list) do
-    list = Enum.map(list, fn x -> ast_to_parsed(x, line) end)
-    {:list, line, list}
+    Enum.map(list, fn x -> ast_to_parsed(x, line) end)
+  end
+
+  def ast_to_parsed(atom, line) when is_atom(atom) do
+    {:atom, line, atom}
+  end
+
+  def ast_to_parsed(int, line) when is_integer(int) do
+    {:integer, line, int}
   end
 
   def ast_to_parsed(ast, _line) do

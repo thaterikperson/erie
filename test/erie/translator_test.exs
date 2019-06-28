@@ -227,7 +227,7 @@ defmodule TranslatorTest do
       code = """
       (defmodule Core)
       (defmacro comment [ast]
-        [])
+        nil)
 
       (def loop []
         (comment 1))
