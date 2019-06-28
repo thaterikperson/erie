@@ -4,17 +4,17 @@ defmodule Erie.Translator do
 
   def from_parsed(forms) do
     with {:ok, mod, mod_line, forms} <- extract_module(forms) do
+      forms = Enum.reverse(forms)
+
       struct =
         %Translator{module: {mod, mod_line}, functions: [], macros: [], macros_ast: [], ast: []}
-        |> translate(Enum.reverse(forms), [])
-        |> prepend_headers()
+        |> translate_macros(forms, [])
 
-      IO.inspect(struct, label: "before maco")
       Macro.compile_macros(struct)
 
       struct =
-        %{struct | ast: [], functions: []}
-        |> translate(Enum.reverse(forms), [])
+        struct
+        |> translate(forms, [])
         |> prepend_headers()
 
       {:ok, struct}
@@ -70,18 +70,8 @@ defmodule Erie.Translator do
           | ret
         ])
 
-      [{:atom, _, :defmacro}, {:atom, line, name}, {:list, _, params} | body] ->
-        body = translate_body(struct, body)
-        params = params |> translate_params([]) |> Enum.reverse()
-        arity = Enum.count(params)
-
-        macros = [
-          {:function, line, name, arity, [{:clause, line, params, [], body}]}
-          | struct.macros_ast
-        ]
-
-        %{struct | macros: [{name, arity} | struct.macros], macros_ast: macros}
-        |> translate(tail, ret)
+      [{:atom, _, :defmacro} | _] ->
+        translate(struct, tail, ret)
 
       [{:atom, line, :def} | _] ->
         translate(struct, tail, [{:error, line} | ret])
@@ -92,6 +82,25 @@ defmodule Erie.Translator do
   end
 
   def translate(struct, [], ret), do: %{struct | ast: ret}
+
+  def translate_macros(struct, [form | tail], ret) do
+    case form do
+      [{:atom, _, :defmacro}, {:atom, line, name}, {:list, _, params} | body] ->
+        body = translate_body(struct, body)
+        params = params |> translate_params([]) |> Enum.reverse()
+        arity = Enum.count(params)
+
+        macros = {:function, line, name, arity, [{:clause, line, params, [], body}]}
+
+        %{struct | macros: [{name, arity} | struct.macros]}
+        |> translate_macros(tail, [macros | ret])
+
+      _ ->
+        translate_macros(struct, tail, ret)
+    end
+  end
+
+  def translate_macros(struct, [], ret), do: %{struct | macros_ast: ret}
 
   def translate_body(struct, list) do
     struct |> translate_body(list, []) |> Enum.reverse()
