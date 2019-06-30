@@ -221,21 +221,4 @@ defmodule TranslatorTest do
               ]} == Translator.to_eaf(forms)
     end
   end
-
-  describe "macro module" do
-    test "simple macro" do
-      code = """
-      (defmodule Core)
-      (defmacro comment [ast]
-        nil)
-
-      (def loop []
-        (comment 1))
-      """
-
-      {:ok, forms} = Parser.parse(code)
-      {:ok, translator} = Translator.from_parsed(forms)
-      assert translator.macros == [comment: 1]
-    end
-  end
 end

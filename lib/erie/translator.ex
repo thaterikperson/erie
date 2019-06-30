@@ -2,29 +2,25 @@ defmodule Erie.Translator do
   alias Erie.{Macro, Translator}
   defstruct [:module, :functions, :macros, :macros_ast, :ast]
 
-  def from_parsed(forms) do
+  def to_eaf(forms) do
     with {:ok, mod, mod_line, forms} <- extract_module(forms) do
-      forms = Enum.reverse(forms)
-
-      struct =
-        %Translator{module: {mod, mod_line}, functions: [], macros: [], macros_ast: [], ast: []}
-        |> translate_macros(forms, [])
-
-      Macro.compile_macros(struct)
-
-      struct =
-        struct
-        |> translate(forms, [])
-        |> prepend_headers()
-
-      {:ok, struct}
+      struct = from_parsed(forms, {mod, mod_line})
+      {:ok, struct.ast}
     end
   end
 
-  def to_eaf(forms) do
-    with {:ok, struct} <- from_parsed(forms) do
-      {:ok, struct.ast}
-    end
+  def from_parsed(forms, {mod, mod_line}) do
+    forms = Enum.reverse(forms)
+
+    struct =
+      %Translator{module: {mod, mod_line}, functions: [], macros: [], macros_ast: [], ast: []}
+      |> translate_macros(forms, [])
+
+    Macro.compile_macros(struct)
+
+    struct
+    |> translate(forms, [])
+    |> prepend_headers()
   end
 
   def macro_module_name(%{module: {module, _}}) do

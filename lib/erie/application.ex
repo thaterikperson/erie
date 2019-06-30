@@ -8,8 +8,7 @@ defmodule Erie.Application do
   def start(_type, _args) do
     # List all child processes to be supervised
     children = [
-      # Starts a worker by calling: Erie.Worker.start_link(arg)
-      # {Erie.Worker, arg}
+      {Erie.Repl, %{count: 1, module: :Core, results: []}}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
