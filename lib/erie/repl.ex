@@ -1,5 +1,4 @@
 defmodule Erie.Repl do
-  alias Erie.{Parser, Translator}
   use GenServer
 
   def start_link(state) do
@@ -22,7 +21,9 @@ defmodule Erie.Repl do
           state
 
         code ->
-          case run(state.module, code) do
+          module = String.to_atom(Atom.to_string(state.module) <> Integer.to_string(state.count))
+
+          case run(module, code) do
             {:ok, result} ->
               %{state | count: state.count + 1, results: [result | state.results]}
 
@@ -48,6 +49,12 @@ defmodule Erie.Repl do
   end
 
   def eval(module, code) do
-    Erie.compile(code, {module, 1})
+    case Erie.compile_and_eval(code, {module, 1}) do
+      {:value, value, _bindings} ->
+        IO.puts(inspect(value))
+
+      :ok ->
+        :ok
+    end
   end
 end

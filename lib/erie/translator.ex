@@ -1,19 +1,27 @@
 defmodule Erie.Translator do
   alias Erie.{Macro, Translator}
-  defstruct [:module, :functions, :macros, :macros_ast, :ast]
+  defstruct [:do_eval?, :module, :functions, :macros, :macros_ast, :ast, :ast_to_eval]
 
   def to_eaf(forms) do
     with {:ok, mod, mod_line, forms} <- extract_module(forms) do
-      struct = from_parsed(forms, {mod, mod_line})
+      struct = from_parsed(forms, {mod, mod_line}, false)
       {:ok, struct.ast}
     end
   end
 
-  def from_parsed(forms, {mod, mod_line}) do
+  def from_parsed(forms, {mod, mod_line}, do_eval?) do
     forms = Enum.reverse(forms)
 
     struct =
-      %Translator{module: {mod, mod_line}, functions: [], macros: [], macros_ast: [], ast: []}
+      %Translator{
+        do_eval?: do_eval?,
+        module: {mod, mod_line},
+        functions: [],
+        macros: [],
+        macros_ast: [],
+        ast: [],
+        ast_to_eval: nil
+      }
       |> translate_macros(forms, [])
 
     Macro.compile_macros(struct)
@@ -72,8 +80,13 @@ defmodule Erie.Translator do
       [{:atom, line, :def} | _] ->
         translate(struct, tail, [{:error, line} | ret])
 
-      _ ->
-        raise "derp #{inspect(form)}"
+      other ->
+        if struct.do_eval? do
+          [parsed] = translate_body(%{macros: []}, [other])
+          %{struct | ast_to_eval: parsed}
+        else
+          raise "derp #{inspect(form)}"
+        end
     end
   end
 

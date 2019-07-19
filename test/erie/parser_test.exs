@@ -69,6 +69,19 @@ defmodule ParserTest do
                 {:")", 3}
               ], 4} == Parser.tokenize(code)
     end
+
+    test "symbols" do
+      code = """
+      (Core1.x)
+      """
+
+      assert {:ok,
+              [
+                {:"(", 1},
+                {:symbol, 1, :"Core1.x"},
+                {:")", 1}
+              ], 2} == Parser.tokenize(code)
+    end
   end
 
   describe "parser" do

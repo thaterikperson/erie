@@ -13,17 +13,16 @@ defmodule Erie do
     end
   end
 
-  def compile(code, mod_pair \\ nil) do
-    translator_func =
-      case mod_pair do
-        nil -> fn forms -> %{ast: elem(Erie.Translator.to_eaf(forms), 1)} end
-        {mod, mod_line} -> fn forms -> Erie.Translator.from_parsed(forms, {mod, mod_line}) end
-      end
-
+  def compile_and_eval(code, {mod, mod_line}) do
     with {:ok, forms} <- Erie.Parser.parse(code),
-         {:ok, %{ast: ast}} <- {:ok, translator_func.(forms)},
-         {:ok, m, b} <- :compile.forms(ast) do
+         translator <- Erie.Translator.from_parsed(forms, {mod, mod_line}, true),
+         {:ok, m, b} <- :compile.forms(translator.ast) do
       :code.load_binary(m, 'nofile', b)
+
+      case translator.ast_to_eval do
+        nil -> :ok
+        to_eval -> :erl_eval.expr(to_eval, [])
+      end
     end
   end
 end
