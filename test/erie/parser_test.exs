@@ -15,7 +15,7 @@ defmodule ParserTest do
 
     test "1 arity function" do
       code = ~S"""
-      (sig name Integer Integer)
+      (sig name [Integer] Integer)
       (def name [x] x)
       """
 
@@ -24,7 +24,9 @@ defmodule ParserTest do
                 {:"(", 1},
                 {:atom, 1, :sig},
                 {:atom, 1, :name},
+                {:"[", 1},
                 {:symbol, 1, :Integer},
+                {:"]", 1},
                 {:symbol, 1, :Integer},
                 {:")", 1},
                 {:"(", 2},
@@ -40,7 +42,7 @@ defmodule ParserTest do
 
     test "literals" do
       code = ~S"""
-      (sig literals Any)
+      (sig literals [] {String (List Integer)})
       (def literals []
         {"abc" [1 2 3 4]})
       """
@@ -50,7 +52,15 @@ defmodule ParserTest do
                 {:"(", 1},
                 {:atom, 1, :sig},
                 {:atom, 1, :literals},
-                {:symbol, 1, :Any},
+                {:"[", 1},
+                {:"]", 1},
+                {:"{", 1},
+                {:symbol, 1, :String},
+                {:"(", 1},
+                {:symbol, 1, :List},
+                {:symbol, 1, :Integer},
+                {:")", 1},
+                {:"}", 1},
                 {:")", 1},
                 {:"(", 2},
                 {:atom, 2, :def},
@@ -99,14 +109,14 @@ defmodule ParserTest do
     test "0 arg basic function" do
       code = ~S"""
       (defmodule Derie)
-      (sig name Integer)
+      (sig name [] Integer)
       (def name [] 0)
       """
 
       assert {:ok,
               [
                 [{:atom, 1, :defmodule}, {:symbol, 1, :Derie}],
-                [{:atom, 2, :sig}, {:atom, 2, :name}, {:symbol, 2, :Integer}],
+                [{:atom, 2, :sig}, {:atom, 2, :name}, {:list, 2, []}, {:symbol, 2, :Integer}],
                 [
                   {:atom, 3, :def},
                   {:atom, 3, :name},
@@ -119,14 +129,14 @@ defmodule ParserTest do
     test "0 arg function calls function" do
       code = ~S"""
       (defmodule Derie)
-      (sig name Integer)
+      (sig name [] Integer)
       (def name [] (+ 1 2))
       """
 
       assert {:ok,
               [
                 [{:atom, 1, :defmodule}, {:symbol, 1, :Derie}],
-                [{:atom, 2, :sig}, {:atom, 2, :name}, {:symbol, 2, :Integer}],
+                [{:atom, 2, :sig}, {:atom, 2, :name}, {:list, 2, []}, {:symbol, 2, :Integer}],
                 [
                   {:atom, 3, :def},
                   {:atom, 3, :name},
@@ -138,7 +148,7 @@ defmodule ParserTest do
 
     test "1 arity function" do
       code = ~S"""
-      (sig name Integer Integer)
+      (sig name [Integer] Integer)
       (def name [x] x)
       """
 
@@ -147,7 +157,10 @@ defmodule ParserTest do
                 [
                   {:atom, 1, :sig},
                   {:atom, 1, :name},
-                  {:symbol, 1, :Integer},
+                  {:list, 1,
+                   [
+                     {:symbol, 1, :Integer}
+                   ]},
                   {:symbol, 1, :Integer}
                 ],
                 [
@@ -161,7 +174,7 @@ defmodule ParserTest do
 
     test "literals" do
       code = ~S"""
-      (sig literals Any)
+      (sig literals [] {String (List String) (List Integer)})
       (def literals []
         {"abc" [] [1 2 3 4]})
       """
@@ -171,7 +184,19 @@ defmodule ParserTest do
                 [
                   {:atom, 1, :sig},
                   {:atom, 1, :literals},
-                  {:symbol, 1, :Any}
+                  {:list, 1, []},
+                  {:tuple, 1,
+                   [
+                     {:symbol, 1, :String},
+                     [
+                       {:symbol, 1, :List},
+                       {:symbol, 1, :String}
+                     ],
+                     [
+                       {:symbol, 1, :List},
+                       {:symbol, 1, :Integer}
+                     ]
+                   ]}
                 ],
                 [
                   {:atom, 2, :def},

@@ -1,6 +1,16 @@
 defmodule Erie.Translator do
   alias Erie.{Macro, Translator}
-  defstruct [:do_eval?, :module, :functions, :macros, :macros_ast, :ast, :ast_to_eval]
+
+  defstruct [
+    :do_eval?,
+    :module,
+    :functions,
+    :macros,
+    :macros_ast,
+    :ast,
+    :ast_to_eval,
+    :signatures
+  ]
 
   def to_eaf(forms) do
     with {:ok, mod, mod_line, forms} <- extract_module(forms) do
@@ -20,7 +30,8 @@ defmodule Erie.Translator do
         macros: [],
         macros_ast: [],
         ast: [],
-        ast_to_eval: nil
+        ast_to_eval: nil,
+        signatures: []
       }
       |> translate_macros(forms, [])
 
@@ -59,8 +70,11 @@ defmodule Erie.Translator do
 
   def translate(struct, [form | tail], ret) do
     case form do
-      [{:atom, _, :sig}, {:atom, _line, _name} | _params] ->
-        # ignoring type information for now
+      [{:atom, _, :sig}, {:atom, _line, name}, {:list, _, _} = params, return_type] ->
+        param_types = translate_type(params)
+        return_type = translate_type(return_type)
+        signatures = [{name, {param_types, return_type}} | struct.signatures]
+        struct = %{struct | signatures: signatures}
         translate(struct, tail, ret)
 
       [{:atom, _, :def}, {:atom, line, name}, {:list, _, params} | body] ->
@@ -85,7 +99,7 @@ defmodule Erie.Translator do
           [parsed] = translate_body(%{macros: []}, [other])
           %{struct | ast_to_eval: parsed}
         else
-          raise "derp #{inspect(form)}"
+          raise "unknown form #{inspect(form)}"
         end
     end
   end
@@ -257,5 +271,33 @@ defmodule Erie.Translator do
 
   def translate_params([], accum) do
     accum
+  end
+
+  def translate_type({:tuple, _, types}) do
+    translated = Enum.map(types, &translate_type/1)
+
+    case translated do
+      [a] -> {a}
+      [a, b] -> {a, b}
+      [a, b, c] -> {a, b, c}
+      [a, b, c, d] -> {a, b, c, d}
+      [a, b, c, d, e] -> {a, b, c, d, e}
+      [a, b, c, d, e, f] -> {a, b, c, d, e, f}
+      [a, b, c, d, e, f, g] -> {a, b, c, d, e, f, g}
+      [a, b, c, d, e, f, g, h] -> {a, b, c, d, e, f, g, h}
+      _ -> raise "Tuples with more than 8 elements not supported"
+    end
+  end
+
+  def translate_type({:list, _, types}) do
+    Enum.map(types, &translate_type/1)
+  end
+
+  def translate_type(types) when is_list(types) do
+    Enum.map(types, &translate_type/1)
+  end
+
+  def translate_type({:symbol, _, type}) do
+    type
   end
 end

@@ -1,0 +1,83 @@
+(defmodule erie.gen-server)
+
+; Can this some how know the module so it doesn't
+; need to accept a random atom?
+; (defmacro make-gen-server []
+;   )
+
+(deftype ReturnError []
+  (union ['timeout 'other]))
+
+(deftype Return [a]
+  (union [{'ok a} {'error ReturnError}]))
+
+(deftype Receiver [a]
+  (union [a {'error String}]))
+
+(deftype State [a]
+  (struct 'module-state a 'module Atom))
+
+(deftype StartReturn [a b]
+  (union
+    [{'ok a}
+     {'ok a Integer}
+     'ignore
+     {'stop b}]))
+
+(doc start-link [Atom a] (StartReturn b c))
+(def start-link [module state]
+  (let
+    [pid (self)]
+    (do
+      (spawn (lambda [] (module-start module state pid))
+      (->
+        (receive [msg msg]
+          (after 5000 {'error 'timeout}))
+        (case
+          [{'ok msg} {'ok msg}
+           {'error error} {'stop {'error error}}
+           _else {'stop 'received-invalid-message}]))))
+
+(doc module-start [Atom a Pid] (union 'ok {'error b})
+(def module-start [module state caller-pid]
+  (let [result (module/init state)]
+    (do
+      ('Elixir.Kernel.send caller-pid result)
+      (case result
+        [{'ok s} (loop (new-state 'module-state s))
+         {'error error} {'error error}]))))
+
+(doc loop [(State a)] 'ok)
+(def loop [state]
+  (let
+    [{parsed caller-pid} (do-receive)
+     new-module-state
+      (case {parsed caller-pid}
+        [{{'ok msg} nil} (module/handle-cast msg (get-module-state state))
+         {{'ok msg} pid} (handle-response (module/handle-call msg (get-module-state state)))
+         {{'error error} _} (module/handle-parse-error error state)])]))
+
+(doc do-receive [] {a (Maybe Pid)})
+(def do-receive []
+  (receive
+    [{'call caller-pid msg} {(parse-message-type msg) caller-pid}
+     {'cast msg} {(parse-message-type msg) nil}]))
+
+(def handle-response [caller-pid call-response]
+  (case call-response
+    [{'reply response new-state}
+      (do
+        ('Elixir.Kernel/send caller-pid respsone)
+        new-state)
+    {'no-reply new-state} new-state]))
+
+(doc call [Pid a] a)
+(def call [pid msg]
+  (let
+    [caller-pid (self)]
+    ('Elixir.Kernel/send pid {'call caller-pid msg})
+    (receive
+      [])))
+
+(def cast [pid msg]
+  ('Elixir.Kernel/send pid {'cast msg}))

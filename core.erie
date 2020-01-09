@@ -1,0 +1,50 @@
+(defmodule erie.core)
+
+(deftype Maybe [a]
+  (union a 'nil))
+
+(deftype Either [a b]
+  (union a b))
+
+(doctype Result
+  """
+  Use when a function must signfiy either success or failure.
+  Has maxmium compatiblity with Elixir and Erlang by using
+  `ok` and `error` tuples.
+  """)
+(deftype Result [a error]
+  (union {'ok a} {'error error}))
+
+(deftype User []
+  (struct {'name String 'age Integer}))
+
+(deftype Pid)
+
+(doc self [] Pid)
+(def self []
+  ('Elixir.Kernel.self))
+
+
+(doc cons [a (List a)] (List a)
+  """
+  Prepend an item to the front of a homogeneous list.
+  """)
+(def cons [element list]
+  ('ErieEx/cons element list))
+
+
+(doc + [(List Number)] Number
+  """
+  Sum the list of integers or floats. Will return
+  the same type of number as those in the list.
+  """)
+(def + [numbers]
+  'ErieEx/plus numbers)
+
+(doc * [(List Number) Number]
+  """
+  Multiplies the list of integers or floats. Will return
+  the same type of number as those in the list.
+  """)
+(def * [numbers]
+  ('ErieEx/multiply numbers))

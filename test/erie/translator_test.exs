@@ -6,7 +6,7 @@ defmodule TranslatorTest do
   test "literals" do
     code = """
     (defmodule Core)
-    (sig literals Any)
+    (sig literals [] {String (List String) (Maybe Integer) (List Integer)})
     (def literals []
       {"abc" [] nil [1 2 3]})
     """
@@ -37,7 +37,7 @@ defmodule TranslatorTest do
   test "0 arity" do
     code = """
     (defmodule Derie)
-    (sig name Integer)
+    (sig name [] Integer)
     (def name [] 1)
     """
 
@@ -57,7 +57,7 @@ defmodule TranslatorTest do
   test "1 arity" do
     code = """
     (defmodule Derie)
-    (sig name Integer Integer)
+    (sig name [Integer] Integer)
     (def name [x] x)
     """
 
@@ -77,9 +77,9 @@ defmodule TranslatorTest do
   test "local function call" do
     code = """
     (defmodule Core)
-    (sig identity Integer Integer)
+    (sig identity [Integer] Integer)
     (def identity [x] x)
-    (sig again Integer)
+    (sig again [] Integer)
     (def again []
       (identity 3))
     """
@@ -107,7 +107,7 @@ defmodule TranslatorTest do
   test "Elixir function call" do
     code = """
     (defmodule Core)
-    (sig split_by_comma String String)
+    (sig split_by_comma [String] String)
     (def split_by_comma [str]
       (Elixir.String.split str ","))
     """
@@ -135,7 +135,7 @@ defmodule TranslatorTest do
   test "case" do
     code = """
     (defmodule Core)
-    (sig split_by String Symbol String)
+    (sig split_by [String Symbol] String)
     (def split_by [str kind]
       (case kind
         ['comma str]
@@ -168,7 +168,7 @@ defmodule TranslatorTest do
     test "as a parameter to a function" do
       code = """
       (defmodule Core)
-      (sig lambdas (List Integer))
+      (sig lambdas [] (List Integer))
       (def lambdas []
         (Elixir.Enum.map [1] (lambda [x] x)))
       """
@@ -197,7 +197,7 @@ defmodule TranslatorTest do
     test "executed anonymously" do
       code = """
       (defmodule Core)
-      (sig lambdas Integer)
+      (sig lambdas [] Integer)
       (def lambdas []
         ((lambda [x] x) 1))
       """

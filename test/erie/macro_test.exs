@@ -6,7 +6,7 @@ defmodule Erie.MacroTest do
     test "no macro" do
       code = """
       (defmodule Core)
-      (sig literals Any)
+      (sig literals [] Any)
       (def literals []
         {"abc" [] [1 2 3]})
       """
@@ -47,6 +47,7 @@ defmodule Erie.MacroTest do
           [(Elixir.Enum.at list 1) (Elixir.Enum.at list 0) (Elixir.Enum.at list 2)])
           (Elixir.Enum.at ast 0)))
 
+      (sig one_plus_two [] Integer)
       (def one_plus_two []
         (infix (1 + 2)))
       """
@@ -57,11 +58,11 @@ defmodule Erie.MacroTest do
       assert [
                {:attribute, 1, :module, :"Erie.Core"},
                {:attribute, 1, :export, [one_plus_two: 0]},
-               {:function, 7, :one_plus_two, 0,
+               {:function, 8, :one_plus_two, 0,
                 [
-                  {:clause, 7, [], [],
+                  {:clause, 8, [], [],
                    [
-                     {:call, 8, {:atom, 8, :+}, [{:integer, 8, 1}, {:integer, 8, 2}]}
+                     {:call, 9, {:atom, 9, :+}, [{:integer, 9, 1}, {:integer, 9, 2}]}
                    ]}
                 ]}
              ] == ast
@@ -73,6 +74,7 @@ defmodule Erie.MacroTest do
       (defmacro a_list [ast]
         ['cons 1 nil])
 
+      (sig map_it [] (Maybe Integer))
       (def map_it []
         (Elixir.List.first (a_list nil)))
       """
@@ -83,13 +85,13 @@ defmodule Erie.MacroTest do
       assert [
                {:attribute, 1, :module, :"Erie.Core"},
                {:attribute, 1, :export, [map_it: 0]},
-               {:function, 5, :map_it, 0,
+               {:function, 6, :map_it, 0,
                 [
-                  {:clause, 5, [], [],
+                  {:clause, 6, [], [],
                    [
-                     {:call, 6, {:remote, 6, {:atom, 6, :"Elixir.List"}, {:atom, 6, :first}},
+                     {:call, 7, {:remote, 7, {:atom, 7, :"Elixir.List"}, {:atom, 7, :first}},
                       [
-                        {:call, 6, {:atom, 6, :cons}, [{:integer, 6, 1}, {:atom, 6, nil}]}
+                        {:call, 7, {:atom, 7, :cons}, [{:integer, 7, 1}, {:atom, 7, nil}]}
                       ]}
                    ]}
                 ]}
