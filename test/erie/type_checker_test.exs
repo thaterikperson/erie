@@ -32,12 +32,28 @@ defmodule Erie.TypeCheckerTest do
     test "literal value" do
       code = """
       (sig one [] Integer)
-      (def x [] 1)
+      (def one [] 1)
+      (sig two [] String)
+      (def two [] "2")
       """
 
       {:ok, forms} = Parser.parse(code)
       translator = Translator.from_parsed(forms, {:Core, 1}, false)
 
+      assert :ok == TypeChecker.check(translator)
+    end
+
+    test "local function call" do
+      code = """
+      (sig one [] Integer)
+      (def one [] 1)
+      (sig one_one [] Integer)
+      (def one_one []
+        (one))
+      """
+
+      {:ok, forms} = Parser.parse(code)
+      translator = Translator.from_parsed(forms, {:Core, 1}, false)
       assert :ok == TypeChecker.check(translator)
     end
   end
