@@ -16,10 +16,13 @@ defmodule Erie.TypeChecker do
           raise "Missing a (def) for #{name}/#{Enum.count(param_types)}"
 
         {_, _, r_type} ->
-          if r_type == return_type do
+          # nil is the equivalent of an empty list.
+          # if the type is calculated as nil, that
+          # works if the defined type is of any list.
+          if r_type == return_type || (is_list(return_type) && is_nil(r_type)) do
             :ok
           else
-            raise "#{name} doc says #{return_type} but I think it's #{r_type}"
+            raise "#{name} doc says #{inspect(return_type)} but I think it's #{inspect(r_type)}"
           end
       end
     end)
@@ -73,6 +76,7 @@ defmodule Erie.TypeChecker do
     end)
   end
 
+  def expression_type({nil, _}, _, _), do: nil
   def expression_type({:integer, _, _}, _, _), do: :Integer
   def expression_type({:bin, _, _}, _, _), do: :String
 
