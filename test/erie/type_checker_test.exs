@@ -78,6 +78,50 @@ defmodule Erie.TypeCheckerTest do
       assert :ok == TypeChecker.check(translator)
     end
 
+    test "literal list type" do
+      code = """
+      (sig four [] [Integer])
+      (def four []
+        [1 2 3 4])
+      (sig one [] [Integer])
+      (def one []
+        [1])
+      """
+
+      {:ok, forms} = Parser.parse(code)
+      translator = Translator.from_parsed(forms, {:Core, 1}, false)
+
+      assert :ok == TypeChecker.check(translator)
+    end
+
+    test "literal list type fails with mismatched types" do
+      code = """
+      (sig one [] [Integer])
+      (def one []
+        [1 2 "3" 4])
+      """
+
+      {:ok, forms} = Parser.parse(code)
+      translator = Translator.from_parsed(forms, {:Core, 1}, false)
+
+      assert_raise RuntimeError, fn ->
+        TypeChecker.check(translator)
+      end
+    end
+
+    test "literal empty list type" do
+      code = """
+      (sig none [] [Integer])
+      (def none []
+        [])
+      """
+
+      {:ok, forms} = Parser.parse(code)
+      translator = Translator.from_parsed(forms, {:Core, 1}, false)
+
+      assert :ok == TypeChecker.check(translator)
+    end
+
     test "local function call" do
       code = """
       (sig one [] Integer)

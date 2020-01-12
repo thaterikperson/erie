@@ -101,6 +101,26 @@ defmodule Erie.TypeChecker do
     end
   end
 
+  # treat `{nil, _}` separately in a `cons`.
+  # `nil` here indicates in the end of the cons
+  # and should not be treated as a `(Maybe x)`
+  def expression_type({:cons, _, val, {nil, _}}, bindings, signatures) do
+    [expression_type(val, bindings, signatures)]
+  end
+
+  def expression_type({:cons, _, val, remainder}, bindings, signatures) do
+    first_type = expression_type(val, bindings, signatures)
+    [remainder_type] = expression_type(remainder, bindings, signatures)
+
+    if first_type == remainder_type do
+      :ok
+    else
+      raise "Mismatched types in list. Expecting #{first_type} but found #{remainder_type}"
+    end
+
+    [first_type]
+  end
+
   @doc """
   `callers` is the ast of each parameter. E.g. `{:var, 3, :x}`
   `defined` is what is expected from the function definition. E.g. {:y, :String}
