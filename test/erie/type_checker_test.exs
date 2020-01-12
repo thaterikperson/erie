@@ -28,6 +28,67 @@ defmodule Erie.TypeCheckerTest do
   test "inner function call checks" do
   end
 
+  describe "parameter checks" do
+    test "basic function" do
+      code = """
+      (sig identity [String] String)
+      (def identity [x] x)
+      """
+
+      {:ok, forms} = Parser.parse(code)
+      translator = Translator.from_parsed(forms, {:Core, 1}, false)
+
+      assert :ok == TypeChecker.check(translator)
+    end
+
+    test "local function call" do
+      code = """
+      (sig identity [String] String)
+      (def identity [x] x)
+      (sig call_it [String] String)
+      (def call_it [y]
+        (identity y))
+      """
+
+      {:ok, forms} = Parser.parse(code)
+      translator = Translator.from_parsed(forms, {:Core, 1}, false)
+
+      assert :ok == TypeChecker.check(translator)
+    end
+
+    test "local function call with literal" do
+      code = """
+      (sig identity [String] String)
+      (def identity [x] x)
+      (sig call_it [] String)
+      (def call_it []
+        (identity "y"))
+      """
+
+      {:ok, forms} = Parser.parse(code)
+      translator = Translator.from_parsed(forms, {:Core, 1}, false)
+
+      assert :ok == TypeChecker.check(translator)
+    end
+
+    test "fails on incorrect parameters to local function call" do
+      code = """
+      (sig identity [String] String)
+      (def identity [x] x)
+      (sig call_it [Integer] String)
+      (def call_it [y]
+        (identity y))
+      """
+
+      {:ok, forms} = Parser.parse(code)
+      translator = Translator.from_parsed(forms, {:Core, 1}, false)
+
+      assert_raise RuntimeError, fn ->
+        TypeChecker.check(translator)
+      end
+    end
+  end
+
   describe "return value checks" do
     test "literal value" do
       code = """
@@ -54,7 +115,25 @@ defmodule Erie.TypeCheckerTest do
 
       {:ok, forms} = Parser.parse(code)
       translator = Translator.from_parsed(forms, {:Core, 1}, false)
+
       assert :ok == TypeChecker.check(translator)
+    end
+
+    test "fails on incorrect return value of local function call" do
+      code = """
+      (sig identity [String] String)
+      (def identity [x] x)
+      (sig call_it [String] Integer)
+      (def call_it [y]
+        (identity y))
+      """
+
+      {:ok, forms} = Parser.parse(code)
+      translator = Translator.from_parsed(forms, {:Core, 1}, false)
+
+      assert_raise RuntimeError, fn ->
+        TypeChecker.check(translator)
+      end
     end
   end
 end
