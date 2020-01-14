@@ -9,6 +9,7 @@ defmodule Erie.Translator do
     :macros_ast,
     :ast,
     :ast_to_eval,
+    :types,
     :signatures
   ]
 
@@ -31,6 +32,7 @@ defmodule Erie.Translator do
         macros_ast: [],
         ast: [],
         ast_to_eval: nil,
+        types: [],
         signatures: []
       }
       |> translate_macros(forms, [])
@@ -90,6 +92,12 @@ defmodule Erie.Translator do
 
       [{:atom, _, :defmacro} | _] ->
         translate(struct, tail, ret)
+
+      [{:atom, _, :deftype}, {:symbol, _line, name}, {:list, _, params}, body] ->
+        type = translate_deftype(name, params, body)
+
+        %{struct | types: [type | struct.types]}
+        |> translate(tail, ret)
 
       [{:atom, line, :def} | _] ->
         translate(struct, tail, [{:error, line} | ret])
@@ -277,7 +285,6 @@ defmodule Erie.Translator do
     translated = Enum.map(types, &translate_type/1)
 
     case translated do
-      [a] -> {a}
       [a, b] -> {a, b}
       [a, b, c] -> {a, b, c}
       [a, b, c, d] -> {a, b, c, d}
@@ -285,7 +292,7 @@ defmodule Erie.Translator do
       [a, b, c, d, e, f] -> {a, b, c, d, e, f}
       [a, b, c, d, e, f, g] -> {a, b, c, d, e, f, g}
       [a, b, c, d, e, f, g, h] -> {a, b, c, d, e, f, g, h}
-      _ -> raise "Tuples with more than 8 elements not supported"
+      _ -> raise "Tuples must have between 2 and 8 elements, inclusive."
     end
   end
 
@@ -293,11 +300,32 @@ defmodule Erie.Translator do
     Enum.map(types, &translate_type/1)
   end
 
-  def translate_type(types) when is_list(types) do
-    Enum.map(types, &translate_type/1)
+  def translate_type([first | params]) do
+    first = translate_type(first)
+    params = Enum.map(params, &translate_type/1)
+    {first, params}
+  end
+
+  def translate_type(list) when is_list(list) do
+    args = Enum.join(list, " ")
+    raise "Attempting to call (#{args}) as a function but it isn't one."
   end
 
   def translate_type({:symbol, _, type}) do
     type
+  end
+
+  def translate_type({:atom, _, atom}) do
+    atom
+  end
+
+  def translate_deftype(name, params, [{:atom, _, :union}, {:list, _, union_options}]) do
+    param_types = Enum.map(params, &translate_type/1)
+    option_types = Enum.map(union_options, &translate_type/1)
+    {{:Union, name}, param_types, option_types}
+  end
+
+  def translate_deftype(_name, _params, _body) do
+    raise "Only union types are supported with deftype right now."
   end
 end

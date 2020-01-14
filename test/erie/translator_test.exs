@@ -1,7 +1,6 @@
-defmodule TranslatorTest do
+defmodule Erie.TranslatorTest do
   use ExUnit.Case
   alias Erie.{Parser, Translator}
-  doctest Erie.Parser
 
   test "literals" do
     code = """
@@ -219,65 +218,6 @@ defmodule TranslatorTest do
                     ]}
                  ]}
               ]} == Translator.to_eaf(forms)
-    end
-  end
-
-  describe "signature parsing" do
-    test "basic types" do
-      code = """
-      (sig one [] Integer)
-      (def one [] 1)
-      (sig two [String String] String)
-      (def two [x y] y)
-      """
-
-      {:ok, forms} = Parser.parse(code)
-      translator = Translator.from_parsed(forms, {:Core, 1}, false)
-
-      assert translator.signatures == [
-               {:one, {[], :Integer}},
-               {:two, {[:String, :String], :String}}
-             ]
-    end
-
-    test "tuple types" do
-      code = """
-      (sig identity [{String Integer}] {String Integer})
-      (def identity [x] x)
-      (sig one [] {String String})
-      (def one []
-        {"x" "y"})
-      """
-
-      {:ok, forms} = Parser.parse(code)
-      translator = Translator.from_parsed(forms, {:Core, 1}, false)
-
-      assert translator.signatures == [
-               {:identity, {[{:String, :Integer}], {:String, :Integer}}},
-               {:one, {[], {:String, :String}}}
-             ]
-    end
-
-    test "list types" do
-      code = """
-      (sig identity [[String]] [String])
-      (def identity [x] x)
-      (sig one [] [Integer])
-      (def one []
-        [1 2 3])
-      """
-
-      {:ok, forms} = Parser.parse(code)
-      translator = Translator.from_parsed(forms, {:Core, 1}, false)
-
-      assert translator.signatures == [
-               {:identity, {[[:String]], [:String]}},
-               {:one, {[], [:Integer]}}
-             ]
-    end
-
-    test "polymorphic types" do
-      assert "get to this later"
     end
   end
 end

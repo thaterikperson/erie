@@ -1,4 +1,4 @@
-defmodule ParserTest do
+defmodule Erie.ParserTest do
   use ExUnit.Case
   alias Erie.Parser
   doctest Erie.Parser

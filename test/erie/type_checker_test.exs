@@ -70,6 +70,8 @@ defmodule Erie.TypeCheckerTest do
       (def one [] 1)
       (sig two [] String)
       (def two [] "2")
+      (sig tup [] (Tuple Integer String))
+      (def tup [] {1 "2"})
       """
 
       {:ok, forms} = Parser.parse(code)
@@ -80,10 +82,10 @@ defmodule Erie.TypeCheckerTest do
 
     test "literal list type" do
       code = """
-      (sig four [] [Integer])
+      (sig four [] (List Integer))
       (def four []
         [1 2 3 4])
-      (sig one [] [Integer])
+      (sig one [] (List Integer))
       (def one []
         [1])
       """
@@ -96,7 +98,7 @@ defmodule Erie.TypeCheckerTest do
 
     test "literal list type fails with mismatched types" do
       code = """
-      (sig one [] [Integer])
+      (sig one [] (List Integer))
       (def one []
         [1 2 "3" 4])
       """
@@ -111,7 +113,7 @@ defmodule Erie.TypeCheckerTest do
 
     test "literal empty list type" do
       code = """
-      (sig none [] [Integer])
+      (sig none [] (List Integer))
       (def none []
         [])
       """
