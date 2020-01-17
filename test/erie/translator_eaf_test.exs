@@ -1,4 +1,4 @@
-defmodule Erie.TranslatorTest do
+defmodule Erie.TranslatorEafTest do
   use ExUnit.Case
   alias Erie.{Parser, Translator}
 

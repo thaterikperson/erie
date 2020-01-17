@@ -116,6 +116,20 @@ defmodule Erie.TypeCheckerUnionTest do
 
       assert :ok == TypeChecker.check(translator)
     end
+
+    # test "same parameter type 2" do
+    #   code = """
+    #   (deftype IntOrWhat [a]
+    #     (union [Integer a {'ok a}]))
+    #   (sig one [] (IntOrWhat String))
+    #   (def one [] {'ok "1"})
+    #   """
+
+    #   {:ok, forms} = Parser.parse(code)
+    #   translator = Translator.from_parsed(forms, {:Core, 1}, false)
+
+    #   assert :ok == TypeChecker.check(translator)
+    # end
   end
 
   describe "user defined" do
@@ -163,4 +177,38 @@ defmodule Erie.TypeCheckerUnionTest do
       end
     end
   end
+
+  #   describe "nested types" do
+  #     test "basic nested" do
+  #       code = """
+  #       (deftype OkError []
+  #         (union ['ok 'error]))
+  #       (deftype OkErrorNone []
+  #         (union [OkError 'none]))
+  #       (sig identity [OkErrorNone] OkErrorNone)
+  #       (def identity [x] x)
+  #       """
+
+  #       {:ok, forms} = Parser.parse(code)
+  #       translator = Translator.from_parsed(forms, {:Core, 1}, false)
+
+  #       assert :ok == TypeChecker.check(translator)
+  #     end
+
+  #     test "nested parameterized" do
+  #       code = """
+  #       (deftype OkOrWhat [a]
+  #         (union ['ok a]))
+  #       (deftype OkOrWhatOrNone [b]
+  #         (union [(OkError b) 'none]))
+  #       (sig identity [(OkOrWhatOrNone String)] (OkOrWhatOrNone String))
+  #       (def identity [x] x)
+  #       """
+
+  #       {:ok, forms} = Parser.parse(code)
+  #       translator = Translator.from_parsed(forms, {:Core, 1}, false)
+
+  #       assert :ok == TypeChecker.check(translator)
+  #     end
+  #   end
 end

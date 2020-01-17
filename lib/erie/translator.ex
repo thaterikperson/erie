@@ -283,17 +283,7 @@ defmodule Erie.Translator do
 
   def translate_type({:tuple, _, types}) do
     translated = Enum.map(types, &translate_type/1)
-
-    case translated do
-      [a, b] -> {a, b}
-      [a, b, c] -> {a, b, c}
-      [a, b, c, d] -> {a, b, c, d}
-      [a, b, c, d, e] -> {a, b, c, d, e}
-      [a, b, c, d, e, f] -> {a, b, c, d, e, f}
-      [a, b, c, d, e, f, g] -> {a, b, c, d, e, f, g}
-      [a, b, c, d, e, f, g, h] -> {a, b, c, d, e, f, g, h}
-      _ -> raise "Tuples must have between 2 and 8 elements, inclusive."
-    end
+    {:Tuple, translated}
   end
 
   def translate_type({:list, _, types}) do

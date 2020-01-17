@@ -109,6 +109,21 @@ defmodule Erie.TypeChecker do
 
   def replace_in_list([], _match, _replacement), do: []
 
+  def replace_in_list([head | tail], match, replacement) when is_tuple(head) do
+    new_head =
+      0
+      |> Range.new(tuple_size(head) - 1)
+      |> Enum.reduce(head, fn index, accum ->
+        if elem(head, index) == match do
+          put_elem(accum, index, replacement)
+        else
+          accum
+        end
+      end)
+
+    [new_head | replace_in_list(tail, match, replacement)]
+  end
+
   def replace_in_list([head | tail], match, replacement) do
     new_head = if head == match, do: replacement, else: head
     [new_head | replace_in_list(tail, match, replacement)]
@@ -156,20 +171,27 @@ defmodule Erie.TypeChecker do
         c_type in options
 
       {{:Tuple, t_options}, {{:Union, _}, _params, options}} ->
-        Enum.any?(options, fn {:Tuple, vals} ->
-          Enum.zip(t_options, vals)
-          |> Enum.all?(fn {t_opt, val} ->
-            cond do
-              t_opt == val ->
-                true
+        Enum.any?(options, fn
+          :Integer ->
+            false
 
-              valid_type_name?(t_opt) && valid_type_param_name?(val) ->
-                true
+          :String ->
+            false
 
-              :else ->
-                false
-            end
-          end)
+          {:Tuple, vals} ->
+            Enum.zip(t_options, vals)
+            |> Enum.all?(fn {t_opt, val} ->
+              cond do
+                t_opt == val ->
+                  true
+
+                valid_type_name?(t_opt) && valid_type_param_name?(val) ->
+                  true
+
+                :else ->
+                  false
+              end
+            end)
         end)
 
         # params == [:a]

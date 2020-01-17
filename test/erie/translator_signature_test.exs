@@ -33,25 +33,24 @@ defmodule Erie.TranslatorSignatureTest do
       translator = Translator.from_parsed(forms, {:Core, 1}, false)
 
       assert translator.signatures == [
-               {:identity, {[{:String, :Integer}], {:String, :Integer}}},
-               {:one, {[], {:String, :String}}}
+               {:identity, {[{:Tuple, [:String, :Integer]}], {:Tuple, [:String, :Integer]}}},
+               {:one, {[], {:Tuple, [:String, :String]}}}
              ]
     end
 
     test "list types" do
       code = """
-      (sig identity [[String]] [String])
-      (def identity [x] x)
+      (sig parameter [(List String)] (List String))
+      (def parameter [x] x)
       (sig one [] [Integer])
-      (def one []
-        [1 2 3])
+      (def one [] [1 2 3])
       """
 
       {:ok, forms} = Parser.parse(code)
       translator = Translator.from_parsed(forms, {:Core, 1}, false)
 
       assert translator.signatures == [
-               {:identity, {[[:String]], [:String]}},
+               {:parameter, {[{:List, [:String]}], {:List, [:String]}}},
                {:one, {[], [:Integer]}}
              ]
     end
