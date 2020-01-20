@@ -1,7 +1,11 @@
 defmodule Erie.TypeChecker do
   def check(translator) do
     # IO.inspect(translator)
-    all_signature_types_are_valid!(translator.signatures, builtin_types() ++ translator.types)
+    all_signature_types_are_valid!(
+      translator.signatures,
+      Erie.Builtin.types() ++ translator.types
+    )
+
     function_asts = Enum.filter(translator.ast, fn line -> elem(line, 0) == :function end)
 
     typed_signatures = match_functions_to_signatures(function_asts, translator.signatures)
@@ -30,7 +34,7 @@ defmodule Erie.TypeChecker do
             type_conforms_to_possible_type?(
               calculated_return_type,
               sig_return_type,
-              translator.types
+              Erie.Builtin.types() ++ translator.types
             ) ->
               :ok
 
@@ -45,22 +49,6 @@ defmodule Erie.TypeChecker do
 
   def list_type?({:List, [_]}), do: true
   def list_type?(_), do: false
-
-  def builtin_types() do
-    [
-      :Float,
-      :Integer,
-      {:List, [:a]},
-      :String,
-      {:Tuple, [:a, :b]},
-      {:Tuple, [:a, :b, :c]},
-      {:Tuple, [:a, :b, :c, :d]},
-      {:Tuple, [:a, :b, :c, :d, :e]},
-      {:Tuple, [:a, :b, :c, :d, :e, :f]},
-      {:Tuple, [:a, :b, :c, :d, :e, :f, :g]},
-      {:Tuple, [:a, :b, :c, :d, :e, :f, :g, :h]}
-    ]
-  end
 
   def all_signature_types_are_valid!(signatures, types) do
     signatures
@@ -80,25 +68,16 @@ defmodule Erie.TypeChecker do
         {sig_atom, avail_atom} when is_atom(sig_atom) and is_atom(avail_atom) ->
           sig_atom == avail_atom
 
-        # List can only have one parameter
-        {{:List, [sig_inner]}, {:List, [avail_inner]}} ->
+        {{:ListInvocation, sig_inner}, {:List, avail_inner}} ->
           valid_type_name?(sig_inner) && valid_type_param_name?(avail_inner)
 
         # Tuple must have at least two parameters
-        {{:Tuple, sig_list}, {:Tuple, avail_list}}
+        {{:TupleInvocation, sig_list}, {:Tuple, avail_list}}
         when length(sig_list) > 1 and length(sig_list) == length(avail_list) ->
-          # TODO: what if the avaialbe tuple is {:Tuple, [:a, :a]}
-          # meaning the two types should be the same
           Enum.all?(sig_list, &valid_type_name?/1) &&
             Enum.all?(avail_list, &valid_type_param_name?/1)
 
-        {sig_name, {{:Union, avail_name}, [], _}} ->
-          sig_name == avail_name
-
-        {{sig_name, []}, {{:Union, avail_name}, [], _}} ->
-          sig_name == avail_name
-
-        {{sig_name, sig_params}, {{:Union, avail_name}, avail_params, _}} ->
+        {{{:UnionInvocation, sig_name}, sig_params}, {{:Union, avail_name}, avail_params, _}} ->
           sig_name == avail_name && Enum.count(sig_params) == Enum.count(avail_params)
 
         _else ->
@@ -107,100 +86,45 @@ defmodule Erie.TypeChecker do
     end)
   end
 
-  def replace_in_list([], _match, _replacement), do: []
+  def type_conforms_to_possible_type?(calculated_type, type_to_conform_to, available_types) do
+    # IO.inspect(calculated_type, label: "calculated_type")
+    # IO.inspect(type_to_conform_to, label: "type_to_conform_to")
 
-  def replace_in_list([head | tail], match, replacement) when is_tuple(head) do
-    new_head =
-      0
-      |> Range.new(tuple_size(head) - 1)
-      |> Enum.reduce(head, fn index, accum ->
-        if elem(head, index) == match do
-          put_elem(accum, index, replacement)
-        else
-          accum
-        end
-      end)
+    expanded_type = Erie.TypeExpander.expand_invocation(type_to_conform_to, available_types)
 
-    [new_head | replace_in_list(tail, match, replacement)]
-  end
+    case {calculated_type, expanded_type} do
+      {l_atom, r_atom} when is_atom(l_atom) and is_atom(r_atom) ->
+        l_atom == r_atom
 
-  def replace_in_list([head | tail], match, replacement) do
-    new_head = if head == match, do: replacement, else: head
-    [new_head | replace_in_list(tail, match, replacement)]
-  end
-
-  def replace_type_parameters(parameterized_type, concrete_type) do
-    case {parameterized_type, concrete_type} do
-      {{{:Union, u_name}, parameters, options}, {_, concrete_params}} ->
-        final_options =
-          parameters
-          |> Enum.zip(concrete_params)
-          |> Enum.reduce(options, fn {name, type}, options ->
-            replace_in_list(options, name, type)
-          end)
-
-        {{:Union, u_name}, parameters, final_options}
-
-      _ ->
-        parameterized_type
-    end
-  end
-
-  def type_conforms_to_possible_type?(calculated_type, type_to_confrom_to, available_types) do
-    res =
-      available_types
-      |> Enum.find(fn
-        {{:Union, name}, params, _} ->
-          case type_to_confrom_to do
-            {p_name, p_params} when is_list(p_params) ->
-              name == p_name && Enum.count(params) == Enum.count(p_params)
-
-            atom when is_atom(atom) ->
-              name == atom
-          end
-
-        _ ->
-          false
-      end)
-
-    case {calculated_type, replace_type_parameters(res, type_to_confrom_to)} do
-      {_, nil} ->
-        false
-
-      {c_type, {{:Union, _}, _, options}} when is_atom(c_type) ->
-        c_type in options
-
-      {{:Tuple, t_options}, {{:Union, _}, _params, options}} ->
-        Enum.any?(options, fn
-          :Integer ->
-            false
-
-          :String ->
-            false
-
-          {:Tuple, vals} ->
-            Enum.zip(t_options, vals)
-            |> Enum.all?(fn {t_opt, val} ->
-              cond do
-                t_opt == val ->
-                  true
-
-                valid_type_name?(t_opt) && valid_type_param_name?(val) ->
-                  true
-
-                :else ->
-                  false
-              end
-            end)
+      {_, {{:UnionInvocation, _}, options}} ->
+        Enum.any?(options, fn o ->
+          type_conforms_to_possible_type?(calculated_type, o, available_types)
         end)
 
-        # params == [:a]
-        # type == t: {:Tuple, [:ok, :Integer]}
-        # options == [{:Tuple, [:ok, :a]}]
+      {{:Symbol, symbol1}, {:Symbol, symbol2}} ->
+        symbol1 == symbol2
+
+      {{:List, l_param}, {:ListInvocation, r_param}} ->
+        l_param == r_param
+
+      {nil, {:ListInvocation, _param}} ->
+        true
+
+      {{:Tuple, l_params}, {:TupleInvocation, r_params}} ->
+        l_params
+        |> Enum.zip(r_params)
+        |> Enum.all?(fn {l, r} -> l == r end)
+
+      _else ->
+        false
     end
   end
 
-  def valid_type_name?(atom), do: atom |> Atom.to_string() |> first_letter_upcase?()
+  def valid_type_name?(atom) when is_atom(atom) do
+    atom |> Atom.to_string() |> first_letter_upcase?()
+  end
+
+  def valid_type_name?(_), do: false
   def valid_type_param_name?(atom), do: not valid_type_name?(atom)
 
   def first_letter_upcase?(name) do
@@ -262,7 +186,7 @@ defmodule Erie.TypeChecker do
   end
 
   def expression_type({nil, _}, _, _), do: nil
-  def expression_type({:atom, _, atom}, _, _), do: atom
+  def expression_type({:atom, _, atom}, _, _), do: {:Symbol, atom}
   def expression_type({:integer, _, _}, _, _), do: :Integer
   def expression_type({:bin, _, _}, _, _), do: :String
 
@@ -295,12 +219,12 @@ defmodule Erie.TypeChecker do
   # `nil` here indicates in the end of the cons
   # and should not be treated as a `(Maybe x)`
   def expression_type({:cons, _, val, {nil, _}}, bindings, signatures) do
-    {:List, [expression_type(val, bindings, signatures)]}
+    {:List, expression_type(val, bindings, signatures)}
   end
 
   def expression_type({:cons, _, val, remainder}, bindings, signatures) do
     first_type = expression_type(val, bindings, signatures)
-    {:List, [remainder_type]} = expression_type(remainder, bindings, signatures)
+    {:List, remainder_type} = expression_type(remainder, bindings, signatures)
 
     if first_type == remainder_type do
       :ok
@@ -308,7 +232,7 @@ defmodule Erie.TypeChecker do
       raise "Mismatched types in list. Expecting #{first_type} but found #{remainder_type}."
     end
 
-    {:List, [first_type]}
+    {:List, first_type}
   end
 
   def expression_type({:tuple, _, types}, bindings, signatures) do

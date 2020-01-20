@@ -72,7 +72,9 @@ defmodule Erie.TypeCheckerUnionTest do
       {:ok, forms} = Parser.parse(code)
       translator = Translator.from_parsed(forms, {:Core, 1}, false)
 
-      assert :ok == TypeChecker.check(translator)
+      assert_raise RuntimeError, fn ->
+        TypeChecker.check(translator)
+      end
     end
 
     test "literal doesn't match parameter" do
@@ -117,19 +119,19 @@ defmodule Erie.TypeCheckerUnionTest do
       assert :ok == TypeChecker.check(translator)
     end
 
-    # test "same parameter type 2" do
-    #   code = """
-    #   (deftype IntOrWhat [a]
-    #     (union [Integer a {'ok a}]))
-    #   (sig one [] (IntOrWhat String))
-    #   (def one [] {'ok "1"})
-    #   """
+    test "same parameter type 2" do
+      code = """
+      (deftype IntOrWhat [a]
+        (union [Integer a {'ok a}]))
+      (sig one [] (IntOrWhat String))
+      (def one [] {'ok "1"})
+      """
 
-    #   {:ok, forms} = Parser.parse(code)
-    #   translator = Translator.from_parsed(forms, {:Core, 1}, false)
+      {:ok, forms} = Parser.parse(code)
+      translator = Translator.from_parsed(forms, {:Core, 1}, false)
 
-    #   assert :ok == TypeChecker.check(translator)
-    # end
+      assert :ok == TypeChecker.check(translator)
+    end
   end
 
   describe "user defined" do
@@ -178,37 +180,115 @@ defmodule Erie.TypeCheckerUnionTest do
     end
   end
 
-  #   describe "nested types" do
-  #     test "basic nested" do
-  #       code = """
-  #       (deftype OkError []
-  #         (union ['ok 'error]))
-  #       (deftype OkErrorNone []
-  #         (union [OkError 'none]))
-  #       (sig identity [OkErrorNone] OkErrorNone)
-  #       (def identity [x] x)
-  #       """
+  describe "nested types" do
+    test "basic nested" do
+      code = """
+      (deftype OkError []
+        (union ['ok 'error]))
+      (deftype OkErrorNone []
+        (union [OkError 'none]))
+      (sig identity [OkErrorNone] OkErrorNone)
+      (def identity [x] x)
+      """
 
-  #       {:ok, forms} = Parser.parse(code)
-  #       translator = Translator.from_parsed(forms, {:Core, 1}, false)
+      {:ok, forms} = Parser.parse(code)
+      translator = Translator.from_parsed(forms, {:Core, 1}, false)
 
-  #       assert :ok == TypeChecker.check(translator)
-  #     end
+      assert :ok == TypeChecker.check(translator)
+    end
 
-  #     test "nested parameterized" do
-  #       code = """
-  #       (deftype OkOrWhat [a]
-  #         (union ['ok a]))
-  #       (deftype OkOrWhatOrNone [b]
-  #         (union [(OkError b) 'none]))
-  #       (sig identity [(OkOrWhatOrNone String)] (OkOrWhatOrNone String))
-  #       (def identity [x] x)
-  #       """
+    test "nested parameterized" do
+      code = """
+      (deftype OkOrWhat [a]
+        (union ['ok a]))
+      (deftype OkOrWhatOrNone [b]
+        (union [(OkOrWhat b) 'none]))
+      (sig identity [(OkOrWhatOrNone String)] (OkOrWhatOrNone String))
+      (def identity [x] x)
+      (sig none [] (OkOrWhatOrNone (Tuple String Integer)))
+      (def none [] 'none)
+      """
 
-  #       {:ok, forms} = Parser.parse(code)
-  #       translator = Translator.from_parsed(forms, {:Core, 1}, false)
+      {:ok, forms} = Parser.parse(code)
+      translator = Translator.from_parsed(forms, {:Core, 1}, false)
 
-  #       assert :ok == TypeChecker.check(translator)
-  #     end
-  #   end
+      assert :ok == TypeChecker.check(translator)
+    end
+
+    test "nested parameterized 2" do
+      code = """
+      (deftype OkOrWhat [a]
+        (union ['ok a]))
+      (deftype OkOrWhatOrNone [b]
+        (union [(OkOrWhat b) 'none]))
+      (sig none [] (OkOrWhatOrNone (Tuple String Integer)))
+      (def none [] 'ok)
+      """
+
+      {:ok, forms} = Parser.parse(code)
+      translator = Translator.from_parsed(forms, {:Core, 1}, false)
+
+      assert :ok == TypeChecker.check(translator)
+    end
+
+    test "nested multiple parameterized" do
+      code = """
+      (deftype Either [a b]
+        (union [a b]))
+      (deftype Threither [a b c]
+        (union [(Either b c) (Either a b)]))
+      (sig none [] (Threither Integer String Float))
+      (def none [] 0)
+      """
+
+      {:ok, forms} = Parser.parse(code)
+      translator = Translator.from_parsed(forms, {:Core, 1}, false)
+
+      assert :ok == TypeChecker.check(translator)
+    end
+
+    test "complicated" do
+      code = """
+      (deftype StepOne [a b]
+        (union [(Tuple Integer Integer) (Tuple String b)]))
+      (deftype StepTwo [a b]
+        (union [(StepOne a b) (Tuple 'ok String)]))
+      (deftype StepThree [a b]
+        (union [(StepTwo 'none Integer) (StepOne b a)]))
+      (sig none [] (StepThree String Float))
+      (def none [] {'ok "ok"})
+      """
+
+      {:ok, forms} = Parser.parse(code)
+      translator = Translator.from_parsed(forms, {:Core, 1}, false)
+
+      assert :ok == TypeChecker.check(translator)
+    end
+
+    test "fails on undefined nested type" do
+      code = """
+      (deftype OkOrWhat [a]
+        (union ['ok a]))
+      (deftype OkOrWhatOrNone [b]
+        (union [(OkError b) 'none]))
+      (sig identity [(OkOrWhatOrNone String)] (OkOrWhatOrNone String))
+      (def identity [x] x)
+      (sig none [] (OkOrWhatOrNone (Tuple String Integer)))
+      (def none [] 'none)
+      """
+
+      {:ok, forms} = Parser.parse(code)
+      translator = Translator.from_parsed(forms, {:Core, 1}, false)
+
+      assert_raise RuntimeError, fn ->
+        TypeChecker.check(translator)
+      end
+    end
+
+    # need another test with deeper and wider polymorph tree.
+    #
+    # also, before: {{:Union, :Ok}, [:a], [Tuple: [:ok, :a]]}
+    # need to figure that out. Is that 'ok or type parameter
+    # named ok?
+  end
 end

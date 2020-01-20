@@ -283,7 +283,7 @@ defmodule Erie.Translator do
 
   def translate_type({:tuple, _, types}) do
     translated = Enum.map(types, &translate_type/1)
-    {:Tuple, translated}
+    {:TupleInvocation, translated}
   end
 
   def translate_type({:list, _, types}) do
@@ -291,9 +291,21 @@ defmodule Erie.Translator do
   end
 
   def translate_type([first | params]) do
-    first = translate_type(first)
     params = Enum.map(params, &translate_type/1)
-    {first, params}
+
+    case {translate_type(first), params} do
+      {:Tuple, _} ->
+        {:TupleInvocation, params}
+
+      {:List, [param]} ->
+        {:ListInvocation, param}
+
+      {{{:UnionInvocation, name}, []}, params} ->
+        {{:UnionInvocation, name}, params}
+
+      {other, _} ->
+        {{:UnionInvocation, other}, params}
+    end
   end
 
   def translate_type(list) when is_list(list) do
@@ -301,8 +313,20 @@ defmodule Erie.Translator do
     raise "Attempting to call (#{args}) as a function but it isn't one."
   end
 
-  def translate_type({:symbol, _, type}) do
-    type
+  def translate_type({:symbol, _, symbol}) do
+    name = Atom.to_string(symbol)
+
+    # Doing this for now because the parser treats words with
+    # capital letters as symbols. That may change in the future.
+    if String.upcase(String.first(name)) == String.first(name) do
+      if symbol in Erie.Builtin.type_names() do
+        symbol
+      else
+        {{:UnionInvocation, symbol}, []}
+      end
+    else
+      {:Symbol, symbol}
+    end
   end
 
   def translate_type({:atom, _, atom}) do

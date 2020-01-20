@@ -33,8 +33,10 @@ defmodule Erie.TranslatorSignatureTest do
       translator = Translator.from_parsed(forms, {:Core, 1}, false)
 
       assert translator.signatures == [
-               {:identity, {[{:Tuple, [:String, :Integer]}], {:Tuple, [:String, :Integer]}}},
-               {:one, {[], {:Tuple, [:String, :String]}}}
+               {:identity,
+                {[{:TupleInvocation, [:String, :Integer]}],
+                 {:TupleInvocation, [:String, :Integer]}}},
+               {:one, {[], {:TupleInvocation, [:String, :String]}}}
              ]
     end
 
@@ -42,16 +44,13 @@ defmodule Erie.TranslatorSignatureTest do
       code = """
       (sig parameter [(List String)] (List String))
       (def parameter [x] x)
-      (sig one [] [Integer])
-      (def one [] [1 2 3])
       """
 
       {:ok, forms} = Parser.parse(code)
       translator = Translator.from_parsed(forms, {:Core, 1}, false)
 
       assert translator.signatures == [
-               {:parameter, {[{:List, [:String]}], {:List, [:String]}}},
-               {:one, {[], [:Integer]}}
+               {:parameter, {[{:ListInvocation, :String}], {:ListInvocation, :String}}}
              ]
     end
   end
@@ -69,7 +68,9 @@ defmodule Erie.TranslatorSignatureTest do
       translator = Translator.from_parsed(forms, {:Core, 1}, false)
 
       assert translator.signatures == [
-               {:identity, {[:IntegerOrString], :IntegerOrString}}
+               {:identity,
+                {[{{:UnionInvocation, :IntegerOrString}, []}],
+                 {{:UnionInvocation, :IntegerOrString}, []}}}
              ]
     end
 
@@ -82,10 +83,13 @@ defmodule Erie.TranslatorSignatureTest do
       """
 
       {:ok, forms} = Parser.parse(code)
+
       translator = Translator.from_parsed(forms, {:Core, 1}, false)
 
       assert translator.signatures == [
-               {:identity, {[{:Result, [:Integer, :String]}], {:Result, [:Integer, :String]}}}
+               {:identity,
+                {[{{:UnionInvocation, :Result}, [:Integer, :String]}],
+                 {{:UnionInvocation, :Result}, [:Integer, :String]}}}
              ]
     end
   end

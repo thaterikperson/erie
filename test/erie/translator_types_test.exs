@@ -13,7 +13,7 @@ defmodule Erie.TranslatorTypesTest do
       translator = Translator.from_parsed(forms, {:Core, 1}, false)
 
       assert translator.types == [
-               {{:Union, :StringList}, [], [{:List, [:String]}]}
+               {{:Union, :StringList}, [], [{:ListInvocation, :String}]}
              ]
     end
 
@@ -27,7 +27,7 @@ defmodule Erie.TranslatorTypesTest do
     #   translator = Translator.from_parsed(forms, {:Core, 1}, false)
 
     #   assert translator.types == [
-    #            {{:Union, :StringList}, [], [{:List, [:String]}]}
+    #            {{:Union, :StringList}, [], [{:ListInvocation, :String}]}
     #          ]
     # end
 
@@ -41,7 +41,7 @@ defmodule Erie.TranslatorTypesTest do
       translator = Translator.from_parsed(forms, {:Core, 1}, false)
 
       assert translator.types == [
-               {{:Union, :StringTuple}, [], [{:Tuple, [:String, :String]}]}
+               {{:Union, :StringTuple}, [], [{:TupleInvocation, [:String, :String]}]}
              ]
     end
 
@@ -55,7 +55,7 @@ defmodule Erie.TranslatorTypesTest do
       translator = Translator.from_parsed(forms, {:Core, 1}, false)
 
       assert translator.types == [
-               {{:Union, :StringTuple}, [], [{:Tuple, [:String, :String]}]}
+               {{:Union, :StringTuple}, [], [{:TupleInvocation, [:String, :String]}]}
              ]
     end
   end
@@ -71,7 +71,30 @@ defmodule Erie.TranslatorTypesTest do
       translator = Translator.from_parsed(forms, {:Core, 1}, false)
 
       assert translator.types == [
-               {{:Union, :IntOrWhat}, [:a], [:Integer, :a, {:Tuple, [:ok, :a]}]}
+               {{:Union, :IntOrWhat}, [:a],
+                [:Integer, :a, {:TupleInvocation, [{:Symbol, :ok}, :a]}]}
+             ]
+    end
+
+    test "nested unions" do
+      code = """
+      (deftype U1 [a b]
+        (union [{'x a} {'y b}]))
+      (deftype U2 [c]
+        (union [{'z c} (U1 String Integer)]))
+      """
+
+      {:ok, forms} = Parser.parse(code)
+      translator = Translator.from_parsed(forms, {:Core, 1}, false)
+
+      assert translator.types == [
+               {{:Union, :U1}, [:a, :b],
+                [{:TupleInvocation, [{:Symbol, :x}, :a]}, {:TupleInvocation, [{:Symbol, :y}, :b]}]},
+               {{:Union, :U2}, [:c],
+                [
+                  {:TupleInvocation, [{:Symbol, :z}, :c]},
+                  {{:UnionInvocation, :U1}, [:String, :Integer]}
+                ]}
              ]
     end
   end

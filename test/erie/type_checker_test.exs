@@ -156,4 +156,30 @@ defmodule Erie.TypeCheckerTest do
       end
     end
   end
+
+  describe "signature_type_exists?" do
+    test "0 param union exists" do
+      assert TypeChecker.signature_type_exists?({{:UnionInvocation, :SimpleResult}, []}, [
+               {{:Union, :SimpleResult}, [], [Symbol: :ok, Symbol: :error]}
+             ])
+    end
+
+    test "one param union exists" do
+      assert TypeChecker.signature_type_exists?(
+               {{:UnionInvocation, :Maybe}, [:String]},
+               [
+                 {{:Union, :Maybe}, [:a], [{:Symbol, nil}, :a]}
+               ]
+             )
+    end
+
+    test "multi-param union exists" do
+      assert TypeChecker.signature_type_exists?(
+               {{:UnionInvocation, :Either}, [:Integer, :String]},
+               [
+                 {{:Union, :Either}, [:a, :b], [:a, :b]}
+               ]
+             )
+    end
+  end
 end
