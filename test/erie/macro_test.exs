@@ -6,7 +6,7 @@ defmodule Erie.MacroTest do
     test "no macro" do
       code = """
       (defmodule Core)
-      (sig literals [] Any)
+      (doc literals [] Any)
       (def literals []
         {"abc" [] [1 2 3]})
       """
@@ -47,7 +47,7 @@ defmodule Erie.MacroTest do
           [(Elixir.Enum.at list 1) (Elixir.Enum.at list 0) (Elixir.Enum.at list 2)])
           (Elixir.Enum.at ast 0)))
 
-      (sig one_plus_two [] Integer)
+      (doc one_plus_two [] Integer)
       (def one_plus_two []
         (infix (1 + 2)))
       """
@@ -74,7 +74,7 @@ defmodule Erie.MacroTest do
       (defmacro a_list [ast]
         ['cons 1 nil])
 
-      (sig map_it [] (Maybe Integer))
+      (doc map_it [] (Maybe Integer))
       (def map_it []
         (Elixir.List.first (a_list nil)))
       """

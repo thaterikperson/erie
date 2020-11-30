@@ -7,7 +7,7 @@ defmodule Erie.TypeCheckerUnionTest do
       code = """
       (deftype IntegerOrString []
         (union [Integer String]))
-      (sig identity [IntegerOrString] IntegerOrString)
+      (doc identity [IntegerOrString] IntegerOrString)
       (def identity [x] x)
       """
 
@@ -21,7 +21,7 @@ defmodule Erie.TypeCheckerUnionTest do
       code = """
       (deftype IntegerOrString []
         (union [Integer String]))
-      (sig one [] IntegerOrString)
+      (doc one [] IntegerOrString)
       (def one [] 1)
       """
 
@@ -37,7 +37,7 @@ defmodule Erie.TypeCheckerUnionTest do
       code = """
       (deftype Ok [a]
         (union [{'ok a}]))
-      (sig identity [(Ok Integer)] (Ok Integer))
+      (doc identity [(Ok Integer)] (Ok Integer))
       (def identity [x] x)
       """
 
@@ -51,7 +51,7 @@ defmodule Erie.TypeCheckerUnionTest do
       code = """
       (deftype Ok [a]
         (union [(Tuple 'ok a)]))
-      (sig ok [] (Ok Integer))
+      (doc ok [] (Ok Integer))
       (def ok [] {'ok 0})
       """
 
@@ -65,7 +65,7 @@ defmodule Erie.TypeCheckerUnionTest do
       code = """
       (deftype Ok [a]
         (union [(Tuple 'ok a)]))
-      (sig ok [] (Ok Integer))
+      (doc ok [] (Ok Integer))
       (def ok [] {'ok "0"})
       """
 
@@ -81,7 +81,7 @@ defmodule Erie.TypeCheckerUnionTest do
       code = """
       (deftype IntOrWhat [a]
         (union [Integer a]))
-      (sig one [] (IntOrWhat String))
+      (doc one [] (IntOrWhat String))
       (def one [] 1)
       """
 
@@ -95,7 +95,7 @@ defmodule Erie.TypeCheckerUnionTest do
       code = """
       (deftype IntOrWhat [a]
         (union [Integer a]))
-      (sig one [] (IntOrWhat String))
+      (doc one [] (IntOrWhat String))
       (def one [] "1")
       """
 
@@ -109,7 +109,7 @@ defmodule Erie.TypeCheckerUnionTest do
       code = """
       (deftype IntOrWhat [a]
         (union [Integer a {'ok a}]))
-      (sig one [] (IntOrWhat String))
+      (doc one [] (IntOrWhat String))
       (def one [] "1")
       """
 
@@ -123,7 +123,7 @@ defmodule Erie.TypeCheckerUnionTest do
       code = """
       (deftype IntOrWhat [a]
         (union [Integer a {'ok a}]))
-      (sig one [] (IntOrWhat String))
+      (doc one [] (IntOrWhat String))
       (def one [] {'ok "1"})
       """
 
@@ -137,7 +137,7 @@ defmodule Erie.TypeCheckerUnionTest do
   describe "user defined" do
     test "fails on undefined parameter type" do
       code = """
-      (sig identity [(Result Integer String)] Integer)
+      (doc identity [(Result Integer String)] Integer)
       (def identity [x] 0)
       """
 
@@ -151,7 +151,7 @@ defmodule Erie.TypeCheckerUnionTest do
 
     test "fails on undefined return type" do
       code = """
-      (sig identity [Integer] (Result Integer String))
+      (doc identity [Integer] (Result Integer String))
       (def identity [x] {'ok x})
       """
 
@@ -167,7 +167,7 @@ defmodule Erie.TypeCheckerUnionTest do
       code = """
       (deftype Result [a e f]
         (union [{'ok a} {'error e} {'other f}]))
-      (sig identity [(Result Integer String)] (Result Integer String))
+      (doc identity [(Result Integer String)] (Result Integer String))
       (def identity [x] x)
       """
 
@@ -187,7 +187,7 @@ defmodule Erie.TypeCheckerUnionTest do
         (union ['ok 'error]))
       (deftype OkErrorNone []
         (union [OkError 'none]))
-      (sig identity [OkErrorNone] OkErrorNone)
+      (doc identity [OkErrorNone] OkErrorNone)
       (def identity [x] x)
       """
 
@@ -203,9 +203,9 @@ defmodule Erie.TypeCheckerUnionTest do
         (union ['ok a]))
       (deftype OkOrWhatOrNone [b]
         (union [(OkOrWhat b) 'none]))
-      (sig identity [(OkOrWhatOrNone String)] (OkOrWhatOrNone String))
+      (doc identity [(OkOrWhatOrNone String)] (OkOrWhatOrNone String))
       (def identity [x] x)
-      (sig none [] (OkOrWhatOrNone (Tuple String Integer)))
+      (doc none [] (OkOrWhatOrNone (Tuple String Integer)))
       (def none [] 'none)
       """
 
@@ -221,7 +221,7 @@ defmodule Erie.TypeCheckerUnionTest do
         (union ['ok a]))
       (deftype OkOrWhatOrNone [b]
         (union [(OkOrWhat b) 'none]))
-      (sig none [] (OkOrWhatOrNone (Tuple String Integer)))
+      (doc none [] (OkOrWhatOrNone (Tuple String Integer)))
       (def none [] 'ok)
       """
 
@@ -237,7 +237,7 @@ defmodule Erie.TypeCheckerUnionTest do
         (union [a b]))
       (deftype Threither [a b c]
         (union [(Either b c) (Either a b)]))
-      (sig none [] (Threither Integer String Float))
+      (doc none [] (Threither Integer String Float))
       (def none [] 0)
       """
 
@@ -255,7 +255,7 @@ defmodule Erie.TypeCheckerUnionTest do
         (union [(StepOne a b) (Tuple 'ok String)]))
       (deftype StepThree [a b]
         (union [(StepTwo 'none Integer) (StepOne b a)]))
-      (sig none [] (StepThree String Float))
+      (doc none [] (StepThree String Float))
       (def none [] {'ok "ok"})
       """
 
@@ -271,9 +271,9 @@ defmodule Erie.TypeCheckerUnionTest do
         (union ['ok a]))
       (deftype OkOrWhatOrNone [b]
         (union [(OkError b) 'none]))
-      (sig identity [(OkOrWhatOrNone String)] (OkOrWhatOrNone String))
+      (doc identity [(OkOrWhatOrNone String)] (OkOrWhatOrNone String))
       (def identity [x] x)
-      (sig none [] (OkOrWhatOrNone (Tuple String Integer)))
+      (doc none [] (OkOrWhatOrNone (Tuple String Integer)))
       (def none [] 'none)
       """
 

@@ -72,7 +72,7 @@ defmodule Erie.Translator do
 
   def translate(struct, [form | tail], ret) do
     case form do
-      [{:atom, _, :sig}, {:atom, _line, name}, {:list, _, _} = params, return_type] ->
+      [{:atom, _, :doc}, {:atom, _line, name}, {:list, _, _} = params, return_type] ->
         param_types = translate_type(params)
         return_type = translate_type(return_type)
         signatures = [{name, {param_types, return_type}} | struct.signatures]

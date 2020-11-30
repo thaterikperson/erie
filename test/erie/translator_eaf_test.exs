@@ -5,7 +5,7 @@ defmodule Erie.TranslatorEafTest do
   test "literals" do
     code = """
     (defmodule Core)
-    (sig literals [] {String (List String) (Maybe Integer) (List Integer)})
+    (doc literals [] {String (List String) (Maybe Integer) (List Integer)})
     (def literals []
       {"abc" [] nil [1 2 3]})
     """
@@ -36,7 +36,7 @@ defmodule Erie.TranslatorEafTest do
   test "0 arity" do
     code = """
     (defmodule Derie)
-    (sig name [] Integer)
+    (doc name [] Integer)
     (def name [] 1)
     """
 
@@ -56,7 +56,7 @@ defmodule Erie.TranslatorEafTest do
   test "1 arity" do
     code = """
     (defmodule Derie)
-    (sig name [Integer] Integer)
+    (doc name [Integer] Integer)
     (def name [x] x)
     """
 
@@ -76,9 +76,9 @@ defmodule Erie.TranslatorEafTest do
   test "local function call" do
     code = """
     (defmodule Core)
-    (sig identity [Integer] Integer)
+    (doc identity [Integer] Integer)
     (def identity [x] x)
-    (sig again [] Integer)
+    (doc again [] Integer)
     (def again []
       (identity 3))
     """
@@ -106,7 +106,7 @@ defmodule Erie.TranslatorEafTest do
   test "Elixir function call" do
     code = """
     (defmodule Core)
-    (sig split_by_comma [String] String)
+    (doc split_by_comma [String] String)
     (def split_by_comma [str]
       (Elixir.String.split str ","))
     """
@@ -134,7 +134,7 @@ defmodule Erie.TranslatorEafTest do
   test "case" do
     code = """
     (defmodule Core)
-    (sig split_by [String Symbol] String)
+    (doc split_by [String Symbol] String)
     (def split_by [str kind]
       (case kind
         ['comma str]
@@ -167,7 +167,7 @@ defmodule Erie.TranslatorEafTest do
     test "as a parameter to a function" do
       code = """
       (defmodule Core)
-      (sig lambdas [] (List Integer))
+      (doc lambdas [] (List Integer))
       (def lambdas []
         (Elixir.Enum.map [1] (lambda [x] x)))
       """
@@ -196,7 +196,7 @@ defmodule Erie.TranslatorEafTest do
     test "executed anonymously" do
       code = """
       (defmodule Core)
-      (sig lambdas [] Integer)
+      (doc lambdas [] Integer)
       (def lambdas []
         ((lambda [x] x) 1))
       """

@@ -5,7 +5,7 @@ defmodule Erie.TypeCheckerTest do
   describe "parameter checks" do
     test "basic function" do
       code = """
-      (sig identity [String] String)
+      (doc identity [String] String)
       (def identity [x] x)
       """
 
@@ -17,9 +17,9 @@ defmodule Erie.TypeCheckerTest do
 
     test "local function call" do
       code = """
-      (sig identity [String] String)
+      (doc identity [String] String)
       (def identity [x] x)
-      (sig call_it [String] String)
+      (doc call_it [String] String)
       (def call_it [y]
         (identity y))
       """
@@ -32,9 +32,9 @@ defmodule Erie.TypeCheckerTest do
 
     test "local function call with literal" do
       code = """
-      (sig identity [String] String)
+      (doc identity [String] String)
       (def identity [x] x)
-      (sig call_it [] String)
+      (doc call_it [] String)
       (def call_it []
         (identity "y"))
       """
@@ -47,9 +47,9 @@ defmodule Erie.TypeCheckerTest do
 
     test "fails on incorrect parameters to local function call" do
       code = """
-      (sig identity [String] String)
+      (doc identity [String] String)
       (def identity [x] x)
-      (sig call_it [Integer] String)
+      (doc call_it [Integer] String)
       (def call_it [y]
         (identity y))
       """
@@ -66,11 +66,11 @@ defmodule Erie.TypeCheckerTest do
   describe "return value checks" do
     test "literal value" do
       code = """
-      (sig one [] Integer)
+      (doc one [] Integer)
       (def one [] 1)
-      (sig two [] String)
+      (doc two [] String)
       (def two [] "2")
-      (sig tup [] (Tuple Integer String))
+      (doc tup [] (Tuple Integer String))
       (def tup [] {1 "2"})
       """
 
@@ -82,10 +82,10 @@ defmodule Erie.TypeCheckerTest do
 
     test "literal list type" do
       code = """
-      (sig four [] (List Integer))
+      (doc four [] (List Integer))
       (def four []
         [1 2 3 4])
-      (sig one [] (List Integer))
+      (doc one [] (List Integer))
       (def one []
         [1])
       """
@@ -98,7 +98,7 @@ defmodule Erie.TypeCheckerTest do
 
     test "literal list type fails with mismatched types" do
       code = """
-      (sig one [] (List Integer))
+      (doc one [] (List Integer))
       (def one []
         [1 2 "3" 4])
       """
@@ -113,7 +113,7 @@ defmodule Erie.TypeCheckerTest do
 
     test "literal empty list type" do
       code = """
-      (sig none [] (List Integer))
+      (doc none [] (List Integer))
       (def none []
         [])
       """
@@ -126,9 +126,9 @@ defmodule Erie.TypeCheckerTest do
 
     test "local function call" do
       code = """
-      (sig one [] Integer)
+      (doc one [] Integer)
       (def one [] 1)
-      (sig one_one [] Integer)
+      (doc one_one [] Integer)
       (def one_one []
         (one))
       """
@@ -141,9 +141,9 @@ defmodule Erie.TypeCheckerTest do
 
     test "fails on incorrect return value of local function call" do
       code = """
-      (sig identity [String] String)
+      (doc identity [String] String)
       (def identity [x] x)
-      (sig call_it [String] Integer)
+      (doc call_it [String] Integer)
       (def call_it [y]
         (identity y))
       """

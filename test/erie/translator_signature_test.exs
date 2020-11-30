@@ -5,9 +5,9 @@ defmodule Erie.TranslatorSignatureTest do
   describe "builtin types" do
     test "basic types" do
       code = """
-      (sig one [] Integer)
+      (doc one [] Integer)
       (def one [] 1)
-      (sig two [String String] String)
+      (doc two [String String] String)
       (def two [x y] y)
       """
 
@@ -22,9 +22,9 @@ defmodule Erie.TranslatorSignatureTest do
 
     test "tuple types" do
       code = """
-      (sig identity [{String Integer}] {String Integer})
+      (doc identity [{String Integer}] {String Integer})
       (def identity [x] x)
-      (sig one [] {String String})
+      (doc one [] {String String})
       (def one []
         {"x" "y"})
       """
@@ -42,7 +42,7 @@ defmodule Erie.TranslatorSignatureTest do
 
     test "list types" do
       code = """
-      (sig parameter [(List String)] (List String))
+      (doc parameter [(List String)] (List String))
       (def parameter [x] x)
       """
 
@@ -60,7 +60,7 @@ defmodule Erie.TranslatorSignatureTest do
       code = """
       (deftype IntegerOrString []
         (union [Integer String]))
-      (sig identity [IntegerOrString] IntegerOrString)
+      (doc identity [IntegerOrString] IntegerOrString)
       (def identity [x] x)
       """
 
@@ -78,7 +78,7 @@ defmodule Erie.TranslatorSignatureTest do
       code = """
       (deftype Result [a e]
         (union [{'ok a} {'error e}]))
-      (sig identity [(Result Integer String)] (Result Integer String))
+      (doc identity [(Result Integer String)] (Result Integer String))
       (def identity [x] x)
       """
 

@@ -15,14 +15,14 @@ defmodule Erie.ParserTest do
 
     test "1 arity function" do
       code = ~S"""
-      (sig name [Integer] Integer)
+      (doc name [Integer] Integer)
       (def name [x] x)
       """
 
       assert {:ok,
               [
                 {:"(", 1},
-                {:atom, 1, :sig},
+                {:atom, 1, :doc},
                 {:atom, 1, :name},
                 {:"[", 1},
                 {:symbol, 1, :Integer},
@@ -42,7 +42,7 @@ defmodule Erie.ParserTest do
 
     test "literals" do
       code = ~S"""
-      (sig literals [] {String (List Integer)})
+      (doc literals [] {String (List Integer)})
       (def literals []
         {"abc" [1 2 3 4]})
       """
@@ -50,7 +50,7 @@ defmodule Erie.ParserTest do
       assert {:ok,
               [
                 {:"(", 1},
-                {:atom, 1, :sig},
+                {:atom, 1, :doc},
                 {:atom, 1, :literals},
                 {:"[", 1},
                 {:"]", 1},
@@ -109,14 +109,14 @@ defmodule Erie.ParserTest do
     test "0 arg basic function" do
       code = ~S"""
       (defmodule Derie)
-      (sig name [] Integer)
+      (doc name [] Integer)
       (def name [] 0)
       """
 
       assert {:ok,
               [
                 [{:atom, 1, :defmodule}, {:symbol, 1, :Derie}],
-                [{:atom, 2, :sig}, {:atom, 2, :name}, {:list, 2, []}, {:symbol, 2, :Integer}],
+                [{:atom, 2, :doc}, {:atom, 2, :name}, {:list, 2, []}, {:symbol, 2, :Integer}],
                 [
                   {:atom, 3, :def},
                   {:atom, 3, :name},
@@ -129,14 +129,14 @@ defmodule Erie.ParserTest do
     test "0 arg function calls function" do
       code = ~S"""
       (defmodule Derie)
-      (sig name [] Integer)
+      (doc name [] Integer)
       (def name [] (+ 1 2))
       """
 
       assert {:ok,
               [
                 [{:atom, 1, :defmodule}, {:symbol, 1, :Derie}],
-                [{:atom, 2, :sig}, {:atom, 2, :name}, {:list, 2, []}, {:symbol, 2, :Integer}],
+                [{:atom, 2, :doc}, {:atom, 2, :name}, {:list, 2, []}, {:symbol, 2, :Integer}],
                 [
                   {:atom, 3, :def},
                   {:atom, 3, :name},
@@ -148,14 +148,14 @@ defmodule Erie.ParserTest do
 
     test "1 arity function" do
       code = ~S"""
-      (sig name [Integer] Integer)
+      (doc name [Integer] Integer)
       (def name [x] x)
       """
 
       assert {:ok,
               [
                 [
-                  {:atom, 1, :sig},
+                  {:atom, 1, :doc},
                   {:atom, 1, :name},
                   {:list, 1,
                    [
@@ -174,7 +174,7 @@ defmodule Erie.ParserTest do
 
     test "literals" do
       code = ~S"""
-      (sig literals [] {String (List String) (List Integer)})
+      (doc literals [] {String (List String) (List Integer)})
       (def literals []
         {"abc" [] [1 2 3 4]})
       """
@@ -182,7 +182,7 @@ defmodule Erie.ParserTest do
       assert {:ok,
               [
                 [
-                  {:atom, 1, :sig},
+                  {:atom, 1, :doc},
                   {:atom, 1, :literals},
                   {:list, 1, []},
                   {:tuple, 1,
