@@ -1,50 +1,88 @@
-(defmodule erie.core)
+(defmodule erie.core
+    (import erie.core.types [Any Atom Bool Float Func Integer Nil Pid String Tuple])
+    (import erie.macro [Ast MacroResult]))
 
-(deftype Maybe [a]
-  (union a 'nil))
 
-(deftype Either [a b]
-  (union a b))
+(docdefine true Bool)
+(define true 'true)
 
-(doctype Result
-  """
-  Use when a function must signfiy either success or failure.
-  Has maxmium compatiblity with Elixir and Erlang by using
-  `ok` and `error` tuples.
-  """)
-(deftype Result [a error]
-  (union {'ok a} {'error error}))
 
-(deftype User []
-  (struct {'name String 'age Integer}))
+(docdefine false Bool)
+(define false 'false)
 
-(deftype Pid)
+
+(docdefine nil Nil)
+(define nil 'nil)
+
 
 (doc self [] Pid)
 (def self []
-  ('Elixir.Kernel.self))
+    ('Elixir.Kernel/self))
 
 
-(doc cons [a (List a)] (List a)
-  """
-  Prepend an item to the front of a homogeneous list.
-  """)
-(def cons [element list]
-  ('ErieEx/cons element list))
+(docmacro if [(Ast Bool) (Ast a) (Ast a)] (MacroResult a))
+(defmacro if [test-expression true-expression false-expression]
+    {'ok ['case test-expression [true true-expression false false-expression]]})
 
 
-(doc + [(List Number)] Number
-  """
-  Sum the list of integers or floats. Will return
-  the same type of number as those in the list.
-  """)
-(def + [numbers]
-  'ErieEx/plus numbers)
+(docmacro def [Atom (List (Ast Atom)) (Ast a)] (MacroResult a)
+    """
+    Produce a more succinct function definition.
 
-(doc * [(List Number) Number]
-  """
-  Multiplies the list of integers or floats. Will return
-  the same type of number as those in the list.
-  """)
-(def * [numbers]
-  ('ErieEx/multiply numbers))
+    Converts
+
+    ```
+    (def my-func [x y]
+        (+ x y))
+    ```
+
+    to
+  
+    ```
+    (define my-func
+        (lambda [x y] (+ x y)))
+    ```
+
+    """)
+; TODO should this also define a new
+; docdefine that makes the type a Func?
+; or maybe that comes from the `doc` macro?
+(defmacro def [name param-list body]
+    {'ok ['define name ['lambda param-list body]})
+
+
+(docmacro let [(List (Ast Any)) (Ast a)] (MacroResult a)
+    """
+    Provide temporary, scoped named bindings
+    before executing an expression.
+  
+    Converts
+
+    ```
+    (let [x 1
+          y (+ x 1)]
+        (+ x y))
+    ```
+
+    to
+
+    ```
+    ((lambda [x]
+        ((lambda [y]
+          (+ x y))
+        (+ x 1)))
+     1)
+    ```
+    """)
+(defmacro let [bindings body]
+    (if (and (even? (length bindings)) (> (length bindings) 0)
+        {'ok (do-let bindings body [])}
+        (macro/error "number of elements in bindings must be even and not zero."))
+
+
+; TODO this should also check that `name` is an atom
+(doc do-let [(List (Ast Any)) (Ast a)] (Ast a))
+(def do-let [bindings body]
+    (case bindings
+        [(cons name (cons value rest)) [['lambda [name] (do-let rest body)] value]
+         [] body]))

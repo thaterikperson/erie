@@ -1,0 +1,11 @@
+(defmoule erie.result)
+
+
+(doctype Result
+  """
+  Use when a function must signfiy either success or failure.
+  Has maxmium compatiblity with Elixir and Erlang by using
+  `ok` and `error` tuples.
+  """)
+(deftype Result [a error]
+  (union [{'ok a} {'error error}]))

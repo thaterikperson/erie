@@ -1,0 +1,31 @@
+(defmoule erie.macro)
+
+
+(doctype Ast
+    """
+    Type parameter reprsents the "return" value of the expression
+    represented by the Ast.
+    """)
+(deftype Ast [a]
+    (union [Atom String Integer Float (List (Ast a))]))
+
+; TODO thoughts on defype Ast
+; could it be (defype Ast [Integer a] …)
+; to capture the line number for better compiler errors?
+
+
+(deftype CompileError
+    (struct 'message String))
+
+
+(deftype MacroResult [a]
+    (Result CompileError (Ast a)))
+
+
+(doc error [String] CompileError
+    """
+    For use only in macros. Instructs the compiler
+    to display an error message to user during compilation.
+    """)
+(def error [message]
+    (CompileError message))

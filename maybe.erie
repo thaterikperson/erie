@@ -1,0 +1,5 @@
+(defmodule erie.maybe)
+
+
+(deftype Maybe [a]
+  (union [a 'nil]))

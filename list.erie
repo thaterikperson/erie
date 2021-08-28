@@ -1,0 +1,67 @@
+(defmodule erie.list)
+
+(doc cons [a (List a)] (List a)
+  """
+  Prepend an item to the front of a homogeneous list.
+  """)
+(def cons [element list]
+  ('ErieEx/cons element list))
+
+(doctype List
+    """
+    A linked list.
+    """)
+(deftype List [a])
+
+(doc all? [(Func a Bool) (List a)] Bool)
+(def all? [test-function list]
+    (reduce (lambda [accum element]
+                (and accum (test-function element)))
+     true
+     list))
+
+
+(doc any? [(Func a Bool) (List a)] Bool)
+(def any? [test-function list]
+    (reduce (lambda [accum element]
+                (or accum (test-function element)))
+     false
+     list))
+
+(doc reverse [(List a)] (List a)
+    """
+    Reverses the elements of the given list.
+    """)
+(def reverse [list]
+    (case list
+        [[] []
+         (cons head rest) (append (reverse rest) [head])]))
+
+
+(doc map [(Func a b) (List a)] (List b)
+    """
+    Enumerates `list` and applies `function` to
+    each element in order.
+    """)
+(def map [function list]
+    (reduce (lambda [accum item]
+                (cons (function item) accum))
+     []
+     (reverse list)))
+
+(doc filter [(Func a Bool)])
+(def filter [function list]
+    (reduce (lambda [accum item]
+                (if (function item) (cons item accum) accum))
+     []
+     (reverse list)))
+
+
+(doc reduce [(Func a b) a (List b)] a)
+(def reduce [function initial-value list]
+    (case list
+        [ []
+            initial-value
+
+          (cons head rest)
+            (reduce function (function initial-value head) rest)]))

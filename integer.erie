@@ -1,0 +1,19 @@
+(defmoule erie.integer)
+
+
+(doc + [(List Number)] Number
+  """
+  Sum the list of integers or floats. Will return
+  the same type of number as those in the list.
+  """)
+(def + [numbers]
+  'ErieEx/plus numbers)
+
+
+(doc * [(List Number) Number]
+  """
+  Multiplies the list of integers or floats. Will return
+  the same type of number as those in the list.
+  """)
+(def * [numbers]
+  ('ErieEx/multiply numbers))

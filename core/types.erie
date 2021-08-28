@@ -1,0 +1,35 @@
+(defmodule erie.core.types
+    """
+    All types in this module are magic compiler types so
+    definitions do not exist here.
+    """)
+
+
+(deftype Any)
+
+
+(deftype Atom)
+
+
+(deftype Bool)
+
+
+(deftype Float)
+
+
+(deftype Func)
+
+
+(deftype Integer)
+
+
+(deftype Nil)
+
+
+(deftype Pid)
+
+
+(deftype String)
+
+
+(deftype Tuple)
